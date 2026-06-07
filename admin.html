@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voices — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f7f6f2;
+  --surface:#ffffff;
+  --surface2:#f2f0eb;
+  --border:#e4e0d8;
+  --border2:#d4cfc5;
+  --text:#1a1814;
+  --muted:#7a7060;
+  --muted2:#b0a898;
+  --gold:#c9933a;
+  --gold-dim:rgba(201,147,58,0.1);
+  --live:#ef4444;
+  --live-dim:rgba(239,68,68,0.08);
+  --green:#16a34a;
+  --green-dim:rgba(22,163,74,0.08);
+  --blue:#2563eb;
+  --blue-dim:rgba(37,99,235,0.08);
+  --amber:#b45309;
+  --amber-dim:rgba(180,83,9,0.08);
+  --radius:12px;
+  --radius-sm:8px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px}
+
+/* SHELL */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100vh;overflow:hidden}
+.sidebar-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.brand{font-family:'Fraunces',serif;font-size:20px;font-weight:300;letter-spacing:-0.3px}
+.brand span{color:var(--gold)}
+.brand-tag{font-size:10px;color:var(--muted);letter-spacing:0.6px;text-transform:uppercase;margin-top:1px}
+.sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.sidebar-scroll::-webkit-scrollbar{width:0}
+.nav-section{padding:14px 16px 5px;font-size:10px;color:var(--muted2);letter-spacing:0.7px;text-transform:uppercase;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:0 6px 1px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.15s}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--gold-dim);color:var(--gold);font-weight:500}
+.nav-item svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px}
+.nb-red{background:var(--live-dim);color:var(--live)}
+.nb-green{background:var(--green-dim);color:var(--green)}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
+.admin-row{display:flex;align-items:center;gap:8px}
+.admin-avatar{width:30px;height:30px;border-radius:50%;background:var(--gold-dim);border:1px solid rgba(201,147,58,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--gold);flex-shrink:0}
+.admin-name{font-size:12px;font-weight:500}
+.admin-role{font-size:10px;color:var(--muted)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;transition:all 0.15s}
+.tb-btn:hover{background:var(--surface2)}
+.tb-btn-primary{background:var(--gold);color:#fff;border-color:var(--gold)}
+.tb-btn-primary:hover{background:#b8832e}
+.tb-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* CONTENT AREA */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px 24px}
+.content::-webkit-scrollbar{width:0}
+
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.stat-value{font-family:'Fraunces',serif;font-size:28px;font-weight:300;line-height:1;margin-bottom:4px}
+.stat-sub{font-size:11px;color:var(--muted)}
+.stat-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;margin-top:5px}
+.sb-green{background:var(--green-dim);color:var(--green)}
+.sb-gold{background:var(--gold-dim);color:var(--gold)}
+.sb-red{background:var(--live-dim);color:var(--live)}
+.sb-blue{background:var(--blue-dim);color:var(--blue)}
+
+/* TABLE */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:22px}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:14px;font-weight:500}
+.table-actions{display:flex;gap:8px;align-items:center}
+.search-sm{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px 6px 30px;font-size:12px;color:var(--text);font-family:inherit;outline:none;width:180px;position:relative}
+.search-sm::placeholder{color:var(--muted)}
+.search-wrap-sm{position:relative}
+.search-wrap-sm svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2}
+.filter-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:var(--radius-sm);font-size:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all 0.15s}
+.filter-btn.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{padding:10px 18px;text-align:left;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
+td{padding:12px 18px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.church-cell{display:flex;align-items:center;gap:10px}
+.church-avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:600}
+.church-name{font-weight:500;font-size:13px}
+.church-loc{font-size:11px;color:var(--muted);margin-top:1px}
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px}
+.status-pill .dot{width:5px;height:5px;border-radius:50%}
+.sp-active{background:var(--green-dim);color:var(--green)}
+.sp-active .dot{background:var(--green)}
+.sp-live{background:var(--live-dim);color:var(--live)}
+.sp-live .dot{background:var(--live);animation:livep 1.2s infinite}
+@keyframes livep{0%,100%{opacity:1}50%{opacity:0.3}}
+.sp-pending{background:var(--amber-dim);color:var(--amber)}
+.sp-pending .dot{background:var(--amber)}
+.sp-inactive{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
+.sp-inactive .dot{background:var(--muted2)}
+.plan-pill{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px}
+.plan-pro{background:var(--gold-dim);color:var(--gold)}
+.plan-free{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.action-btn{width:28px;height:28px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;margin-left:3px}
+.action-btn:hover{background:var(--surface2);border-color:var(--border2)}
+.action-btn svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:1.8}
+
+/* BOTTOM GRID */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+
+/* UPLOAD QUEUE */
+.upload-list{display:flex;flex-direction:column}
+.upload-item{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid var(--border);transition:background 0.1s}
+.upload-item:last-child{border-bottom:none}
+.upload-item:hover{background:var(--surface2)}
+.upload-icon{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.upload-icon svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.upload-info{flex:1;min-width:0}
+.upload-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upload-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.upload-progress{height:3px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden}
+.upload-fill{height:100%;border-radius:2px;transition:width 0.5s}
+.up-done{background:var(--green)}
+.up-progress{background:var(--gold)}
+.up-pending{background:var(--border2)}
+
+/* SIGNUPS */
+.signup-list{display:flex;flex-direction:column}
+.signup-item{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid var(--border)}
+.signup-item:last-child{border-bottom:none}
+.signup-item:hover{background:var(--surface2)}
+.signup-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.signup-info{flex:1;min-width:0}
+.signup-name{font-size:12px;font-weight:500}
+.signup-detail{font-size:11px;color:var(--muted);margin-top:1px}
+.signup-time{font-size:10px;color:var(--muted2);flex-shrink:0}
+.signup-actions{display:flex;gap:4px;flex-shrink:0}
+.sa-btn{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;cursor:pointer;border:none;font-family:inherit;transition:all 0.15s}
+.sa-approve{background:var(--green-dim);color:var(--green)}
+.sa-approve:hover{background:#dcfce7}
+.sa-reject{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.sa-reject:hover{background:var(--live-dim);color:var(--live);border-color:var(--live)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:24px;width:460px;max-height:80vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300}
+.modal-close{width:28px;height:28px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.modal-close svg{width:13px;height:13px;stroke:var(--text);fill:none;stroke-width:2}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:0.4px}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color 0.15s}
+.form-input:focus{border-color:var(--gold)}
+.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;appearance:none;cursor:pointer}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:10px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;transform:translateY(60px);opacity:0;transition:all 0.3s;z-index:200}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* PANEL VIEWS */
+.view{display:none}
+.view.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand">Vo<span>i</span>ces</div>
+      <div class="brand-tag">Platform Admin</div>
+    </div>
+    <div class="sidebar-scroll">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="switchView('dashboard',this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="switchView('churches',this)">
+        <svg viewBox="0 0 24 24"><path d="M12 2v4M10 4h4"/><path d="M4 22V10l8-6 8 6v12"/><path d="M9 22v-6h6v6"/></svg>
+        Churches
+        <span class="nav-badge nb-green">248</span>
+      </div>
+      <div class="nav-item" onclick="switchView('signups',this)">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Signups
+        <span class="nav-badge nb-red">7</span>
+      </div>
+      <div class="nav-item" onclick="switchView('content',this)">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Content Uploads
+        <span class="nav-badge nb-red">3</span>
+      </div>
+      <div class="nav-section">Stations</div>
+      <div class="nav-item" onclick="switchView('live',this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49M7.76 16.24a6 6 0 010-8.49"/></svg>
+        Live Now
+        <span class="nav-badge nb-red">6</span>
+      </div>
+      <div class="nav-item" onclick="switchView('shoutouts',this)">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Shoutouts
+        <span class="nav-badge nb-red">12</span>
+      </div>
+      <div class="nav-section">System</div>
+      <div class="nav-item" onclick="showToast('Billing module coming soon')">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Billing
+      </div>
+      <div class="nav-item" onclick="showToast('Settings coming soon')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 006.99 3.34"/><path d="M4.93 19.07A10 10 0 1019.07 4.93"/></svg>
+        Settings
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="admin-row">
+        <div class="admin-avatar">JO</div>
+        <div>
+          <div class="admin-name">Joel</div>
+          <div class="admin-role">Platform Owner</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-right">
+        <button class="tb-btn" onclick="showToast('Exporting data...')">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="tb-btn tb-btn-primary" onclick="openModal()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Church
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD VIEW -->
+      <div class="view active" id="view-dashboard">
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total Churches</div>
+            <div class="stat-value">248</div>
+            <div class="stat-sub">Across 38 countries</div>
+            <span class="stat-badge sb-green">↑ 12 this month</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Stations</div>
+            <div class="stat-value">231</div>
+            <div class="stat-sub">Broadcasting now or today</div>
+            <span class="stat-badge sb-gold">93% uptime</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Live Right Now</div>
+            <div class="stat-value" id="liveCount">6</div>
+            <div class="stat-sub">Pastors on air</div>
+            <span class="stat-badge sb-red">● Live</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Monthly Revenue</div>
+            <div class="stat-value">$11,400</div>
+            <div class="stat-sub">228 paid stations</div>
+            <span class="stat-badge sb-green">↑ $600 vs last month</span>
+          </div>
+        </div>
+
+        <!-- RECENT CHURCHES TABLE -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">Recent Church Activity</span>
+            <div class="table-actions">
+              <div class="search-wrap-sm">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-sm" placeholder="Search..." oninput="filterTable(this.value)">
+              </div>
+            </div>
+          </div>
+          <table id="churchTable">
+            <thead>
+              <tr>
+                <th>Church</th>
+                <th>Status</th>
+                <th>Plan</th>
+                <th>Listeners</th>
+                <th>Joined</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="churchTableBody">
+            </tbody>
+          </table>
+        </div>
+
+        <!-- BOTTOM GRID -->
+        <div class="bottom-grid">
+          <!-- RECENT UPLOADS -->
+          <div class="table-card">
+            <div class="table-header">
+              <span class="table-title">Recent Uploads</span>
+              <span class="stat-badge sb-red" style="font-size:10px">3 pending review</span>
+            </div>
+            <div class="upload-list">
+              <div class="upload-item">
+                <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                <div class="upload-info">
+                  <div class="upload-name">Sunday Sermon — June 1.mp3</div>
+                  <div class="upload-meta">Grace Community · 48 MB</div>
+                  <div class="upload-progress"><div class="upload-fill up-done" style="width:100%"></div></div>
+                </div>
+                <span class="stat-badge sb-green" style="font-size:10px;flex-shrink:0">Done</span>
+              </div>
+              <div class="upload-item">
+                <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                <div class="upload-info">
+                  <div class="upload-name">Youth Praise Mix 2026.mp3</div>
+                  <div class="upload-meta">Victory Praise Centre · 112 MB</div>
+                  <div class="upload-progress"><div class="upload-fill up-progress" style="width:67%"></div></div>
+                </div>
+                <span class="stat-badge sb-gold" style="font-size:10px;flex-shrink:0">67%</span>
+              </div>
+              <div class="upload-item">
+                <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                <div class="upload-info">
+                  <div class="upload-name">Morning Devotional Series.mp3</div>
+                  <div class="upload-meta">Redeemed Gospel · 76 MB</div>
+                  <div class="upload-progress"><div class="upload-fill up-pending" style="width:20%"></div></div>
+                </div>
+                <span class="stat-badge sb-blue" style="font-size:10px;flex-shrink:0">Review</span>
+              </div>
+              <div class="upload-item">
+                <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                <div class="upload-info">
+                  <div class="upload-name">Evening Worship Medley.mp3</div>
+                  <div class="upload-meta">Cornerstone Church · 94 MB</div>
+                  <div class="upload-progress"><div class="upload-fill up-done" style="width:100%"></div></div>
+                </div>
+                <span class="stat-badge sb-green" style="font-size:10px;flex-shrink:0">Done</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- PENDING SIGNUPS -->
+          <div class="table-card">
+            <div class="table-header">
+              <span class="table-title">Pending Signups</span>
+              <span class="stat-badge sb-red" style="font-size:10px">7 awaiting approval</span>
+            </div>
+            <div class="signup-list">
+              <div class="signup-item">
+                <div class="signup-avatar" style="background:#fef3c7;color:#92400e">EA</div>
+                <div class="signup-info">
+                  <div class="signup-name">Emmanuel Assembly</div>
+                  <div class="signup-detail">Kumasi, Ghana · pastor@ea.com</div>
+                </div>
+                <span class="signup-time">2h ago</span>
+                <div class="signup-actions">
+                  <button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button>
+                  <button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button>
+                </div>
+              </div>
+              <div class="signup-item">
+                <div class="signup-avatar" style="background:#d1fae5;color:#065f46">FC</div>
+                <div class="signup-info">
+                  <div class="signup-name">Faith Chapel</div>
+                  <div class="signup-detail">Abuja, Nigeria · admin@faithchapel.ng</div>
+                </div>
+                <span class="signup-time">5h ago</span>
+                <div class="signup-actions">
+                  <button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button>
+                  <button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button>
+                </div>
+              </div>
+              <div class="signup-item">
+                <div class="signup-avatar" style="background:#ede9fe;color:#5b21b6">RB</div>
+                <div class="signup-info">
+                  <div class="signup-name">Revival Baptist</div>
+                  <div class="signup-detail">Nairobi, Kenya · revivalbaptist@ke.org</div>
+                </div>
+                <span class="signup-time">1d ago</span>
+                <div class="signup-actions">
+                  <button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button>
+                  <button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHURCHES VIEW -->
+      <div class="view" id="view-churches">
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">All Churches</span>
+            <div class="table-actions">
+              <button class="filter-btn active" onclick="toggleFilter(this,'All')">All</button>
+              <button class="filter-btn" onclick="toggleFilter(this,'Active')">Active</button>
+              <button class="filter-btn" onclick="toggleFilter(this,'Live')">Live</button>
+              <button class="filter-btn" onclick="toggleFilter(this,'Pending')">Pending</button>
+              <div class="search-wrap-sm">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-sm" placeholder="Search churches...">
+              </div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Church</th><th>Status</th><th>Plan</th><th>Country</th><th>Listeners Today</th><th>Joined</th><th></th></tr>
+            </thead>
+            <tbody id="allChurchesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SIGNUPS VIEW -->
+      <div class="view" id="view-signups">
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">Church Signup Requests</span>
+            <span class="stat-badge sb-red">7 pending</span>
+          </div>
+          <div class="signup-list" id="allSignupsList">
+            <div class="signup-item">
+              <div class="signup-avatar" style="background:#fef3c7;color:#92400e">EA</div>
+              <div class="signup-info"><div class="signup-name">Emmanuel Assembly</div><div class="signup-detail">Kumasi, Ghana · pastor@ea.com · 400 members</div></div>
+              <span class="signup-time">2h ago</span>
+              <div class="signup-actions"><button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button><button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button></div>
+            </div>
+            <div class="signup-item">
+              <div class="signup-avatar" style="background:#d1fae5;color:#065f46">FC</div>
+              <div class="signup-info"><div class="signup-name">Faith Chapel</div><div class="signup-detail">Abuja, Nigeria · admin@faithchapel.ng · 250 members</div></div>
+              <span class="signup-time">5h ago</span>
+              <div class="signup-actions"><button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button><button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button></div>
+            </div>
+            <div class="signup-item">
+              <div class="signup-avatar" style="background:#ede9fe;color:#5b21b6">RB</div>
+              <div class="signup-info"><div class="signup-name">Revival Baptist</div><div class="signup-detail">Nairobi, Kenya · revivalbaptist@ke.org · 180 members</div></div>
+              <span class="signup-time">1d ago</span>
+              <div class="signup-actions"><button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button><button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button></div>
+            </div>
+            <div class="signup-item">
+              <div class="signup-avatar" style="background:#fee2e2;color:#991b1b">GH</div>
+              <div class="signup-info"><div class="signup-name">Glory House</div><div class="signup-detail">Accra, Ghana · gloryhouse@gh.com · 600 members</div></div>
+              <span class="signup-time">1d ago</span>
+              <div class="signup-actions"><button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button><button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button></div>
+            </div>
+            <div class="signup-item">
+              <div class="signup-avatar" style="background:#dbeafe;color:#1e40af">NL</div>
+              <div class="signup-info"><div class="signup-name">New Life Church</div><div class="signup-detail">Manila, Philippines · newlife@ph.org · 1,200 members</div></div>
+              <span class="signup-time">2d ago</span>
+              <div class="signup-actions"><button class="sa-btn sa-approve" onclick="approveSignup(this)">Approve</button><button class="sa-btn sa-reject" onclick="rejectSignup(this)">Reject</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT VIEW -->
+      <div class="view" id="view-content">
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">Content Upload Queue</span>
+            <span class="stat-badge sb-red">3 need review</span>
+          </div>
+          <table>
+            <thead><tr><th>File</th><th>Church</th><th>Type</th><th>Size</th><th>Status</th><th>Uploaded</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><div style="font-weight:500">Sunday Sermon — June 1.mp3</div></td><td><span style="color:var(--muted)">Grace Community</span></td><td>Sermon</td><td>48 MB</td><td><span class="status-pill sp-active"><div class="dot"></div>Live</span></td><td style="color:var(--muted)">Today</td><td><button class="action-btn" onclick="showToast('Playing preview...')"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></td></tr>
+              <tr><td><div style="font-weight:500">Youth Praise Mix 2026.mp3</div></td><td><span style="color:var(--muted)">Victory Praise</span></td><td>Music</td><td>112 MB</td><td><span class="status-pill sp-pending"><div class="dot"></div>Review</span></td><td style="color:var(--muted)">Today</td><td><button class="action-btn" onclick="showToast('Approving...')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button></td></tr>
+              <tr><td><div style="font-weight:500">Morning Devotional Series.mp3</div></td><td><span style="color:var(--muted)">Redeemed Gospel</span></td><td>Devotional</td><td>76 MB</td><td><span class="status-pill sp-pending"><div class="dot"></div>Review</span></td><td style="color:var(--muted)">Today</td><td><button class="action-btn" onclick="showToast('Approving...')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button></td></tr>
+              <tr><td><div style="font-weight:500">Evening Worship Medley.mp3</div></td><td><span style="color:var(--muted)">Cornerstone</span></td><td>Worship</td><td>94 MB</td><td><span class="status-pill sp-active"><div class="dot"></div>Live</span></td><td style="color:var(--muted)">Yesterday</td><td><button class="action-btn" onclick="showToast('Playing preview...')"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></td></tr>
+              <tr><td><div style="font-weight:500">Bible Study — Romans 8.mp3</div></td><td><span style="color:var(--muted)">Calvary Baptist</span></td><td>Teaching</td><td>62 MB</td><td><span class="status-pill sp-active"><div class="dot"></div>Live</span></td><td style="color:var(--muted)">Yesterday</td><td><button class="action-btn" onclick="showToast('Playing preview...')"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LIVE NOW VIEW -->
+      <div class="view" id="view-live">
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card"><div class="stat-label">Stations Live</div><div class="stat-value">6</div><span class="stat-badge sb-red">● Broadcasting</span></div>
+          <div class="stat-card"><div class="stat-label">Total Listeners</div><div class="stat-value">2,847</div><span class="stat-badge sb-green">↑ 312 last hour</span></div>
+          <div class="stat-card"><div class="stat-label">Shoutouts On Air</div><div class="stat-value">18</div><span class="stat-badge sb-gold">Today</span></div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">Currently Live</span></div>
+          <table>
+            <thead><tr><th>Church</th><th>Programme</th><th>Listeners</th><th>Duration</th><th>Country</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><div class="church-cell"><div class="church-avatar" style="background:#fef3c7;color:#92400e">GC</div><div><div class="church-name">Grace Community</div><div class="church-loc">Accra, Ghana</div></div></div></td><td>Morning Worship Set</td><td>247</td><td>1h 24m</td><td>🇬🇭 Ghana</td><td><span class="status-pill sp-live"><div class="dot"></div>Live</span></td></tr>
+              <tr><td><div class="church-cell"><div class="church-avatar" style="background:#d1fae5;color:#065f46">RG</div><div><div class="church-name">Redeemed Gospel</div><div class="church-loc">Lagos, Nigeria</div></div></div></td><td>Pastor Emeka — Live Sermon</td><td>1,204</td><td>0h 42m</td><td>🇳🇬 Nigeria</td><td><span class="status-pill sp-live"><div class="dot"></div>Live</span></td></tr>
+              <tr><td><div class="church-cell"><div class="church-avatar" style="background:#ede9fe;color:#5b21b6">LW</div><div><div class="church-name">Living Word</div><div class="church-loc">Manila, Philippines</div></div></div></td><td>Prayer Service</td><td>528</td><td>0h 18m</td><td>🇵🇭 Philippines</td><td><span class="status-pill sp-live"><div class="dot"></div>Live</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SHOUTOUTS VIEW -->
+      <div class="view" id="view-shoutouts">
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">Pending Shoutouts</span><span class="stat-badge sb-red">12 waiting</span></div>
+          <table>
+            <thead><tr><th>From</th><th>Station</th><th>Type</th><th>Message</th><th>Sent</th><th></th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:500">Abena Kofi</td><td style="color:var(--muted)">Grace Community</td><td><span class="plan-pill plan-free">Text</span></td><td style="color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">"Happy birthday to Elder Kwame!"</td><td style="color:var(--muted)">2m ago</td><td><button class="action-btn" onclick="showToast('Approved!')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button><button class="action-btn" onclick="showToast('Rejected')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td></tr>
+              <tr><td style="font-weight:500">Samuel Mensah</td><td style="color:var(--muted)">Grace Community</td><td><span class="plan-pill plan-pro">Voice</span></td><td style="color:var(--muted)">0:24 voice message</td><td style="color:var(--muted)">5m ago</td><td><button class="action-btn" onclick="showToast('Approved!')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button><button class="action-btn" onclick="showToast('Rejected')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td></tr>
+              <tr><td style="font-weight:500">Chidi Okafor</td><td style="color:var(--muted)">Redeemed Gospel</td><td><span class="plan-pill plan-free">Text</span></td><td style="color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">"God bless this ministry!"</td><td style="color:var(--muted)">8m ago</td><td><button class="action-btn" onclick="showToast('Approved!')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button><button class="action-btn" onclick="showToast('Rejected')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD CHURCH MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New Church</div>
+      <button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Church Name</label>
+        <input class="form-input" type="text" placeholder="e.g. Grace Community Church">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pastor Name</label>
+        <input class="form-input" type="text" placeholder="e.g. Pastor Amos">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Country</label>
+        <select class="form-select">
+          <option>Ghana</option><option>Nigeria</option><option>Kenya</option><option>South Africa</option><option>Uganda</option><option>Philippines</option><option>USA</option><option>UK</option><option>Brazil</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">City</label>
+        <input class="form-input" type="text" placeholder="e.g. Accra">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" placeholder="pastor@church.com">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Plan</label>
+        <select class="form-select"><option>Pro — $50/mo</option><option>Free</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Station ID</label>
+        <input class="form-input" type="text" placeholder="grace-community">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal()">Cancel</button>
+      <button class="tb-btn tb-btn-primary" onclick="addChurch()">Create Station</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CHURCHES = [
+  {name:'Grace Community Church',loc:'Accra, Ghana',status:'live',plan:'pro',listeners:247,joined:'Jun 1, 2026',color:'#fef3c7',text:'#92400e',init:'GC'},
+  {name:'Redeemed Gospel Church',loc:'Lagos, Nigeria',status:'live',plan:'pro',listeners:1204,joined:'May 15, 2026',color:'#d1fae5',text:'#065f46',init:'RG'},
+  {name:'Calvary Baptist Church',loc:'Nairobi, Kenya',status:'active',plan:'pro',listeners:89,joined:'May 8, 2026',color:'#dbeafe',text:'#1e40af',init:'CB'},
+  {name:'Victory Praise Centre',loc:'Kumasi, Ghana',status:'active',plan:'pro',listeners:312,joined:'Apr 22, 2026',color:'#fef3c7',text:'#78350f',init:'VP'},
+  {name:'City Harvest Church',loc:'Johannesburg, SA',status:'active',plan:'free',listeners:156,joined:'Apr 10, 2026',color:'#f0fdf4',text:'#166534',init:'CH'},
+  {name:'Living Word Ministries',loc:'Manila, Philippines',status:'live',plan:'pro',listeners:528,joined:'Mar 30, 2026',color:'#ede9fe',text:'#5b21b6',init:'LW'},
+  {name:'Cornerstone Church',loc:'London, UK',status:'active',plan:'pro',listeners:74,joined:'Mar 12, 2026',color:'#fce7f3',text:'#9d174d',init:'CC'},
+  {name:'Hope Chapel',loc:'São Paulo, Brazil',status:'pending',plan:'free',listeners:0,joined:'Jun 6, 2026',color:'#fef9c3',text:'#713f12',init:'HC'},
+];
+
+function renderTable(data, bodyId){
+  const tbody = document.getElementById(bodyId);
+  if(!tbody) return;
+  tbody.innerHTML = data.map(c => `
+    <tr>
+      <td><div class="church-cell">
+        <div class="church-avatar" style="background:${c.color};color:${c.text}">${c.init}</div>
+        <div><div class="church-name">${c.name}</div><div class="church-loc">${c.loc}</div></div>
+      </div></td>
+      <td><span class="status-pill sp-${c.status}"><div class="dot"></div>${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span></td>
+      <td><span class="plan-pill plan-${c.plan}">${c.plan === 'pro' ? 'Pro $50' : 'Free'}</span></td>
+      <td>${c.listeners > 0 ? c.listeners.toLocaleString() : '—'}</td>
+      <td style="color:var(--muted)">${c.joined}</td>
+      <td>
+        <button class="action-btn" onclick="showToast('Viewing ${c.name}')"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button class="action-btn" onclick="showToast('Editing ${c.name}')"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+renderTable(CHURCHES.slice(0,6), 'churchTableBody');
+renderTable(CHURCHES, 'allChurchesBody');
+
+function filterTable(q){
+  const rows = document.querySelectorAll('#churchTableBody tr');
+  rows.forEach(r=>{
+    const txt = r.textContent.toLowerCase();
+    r.style.display = (!q || txt.includes(q.toLowerCase())) ? '' : 'none';
+  });
+}
+
+function switchView(name, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  el.classList.add('active');
+  const titles = {dashboard:'Dashboard',churches:'Churches',signups:'Signup Requests',content:'Content Uploads',live:'Live Now',shoutouts:'Shoutouts'};
+  document.getElementById('pageTitle').textContent = titles[name] || name;
+}
+
+function toggleFilter(el, val){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Filtering: ' + val);
+}
+
+function openModal(){ document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+function addChurch(){
+  closeModal();
+  showToast('Church station created successfully');
+}
+
+function approveSignup(btn){
+  const item = btn.closest('.signup-item');
+  const name = item.querySelector('.signup-name').textContent;
+  item.style.opacity='0.4';
+  item.style.pointerEvents='none';
+  showToast(name + ' approved ✓');
+}
+
+function rejectSignup(btn){
+  const item = btn.closest('.signup-item');
+  item.remove();
+  showToast('Request rejected');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// Tick live count
+setInterval(()=>{
+  const el = document.getElementById('liveCount');
+  if(el) el.textContent = 6 + (Math.random() > 0.7 ? 1 : 0);
+}, 5000);
+</script>
+<!-- VOICES NAV -->
+<div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+  <a href="index.html" style="background:#c9933a;color:#1a0f00;font-family:sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;text-decoration:none;letter-spacing:0.3px">🎙 Directory</a>
+  <a href="listen.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">📻 Listen</a>
+  <a href="dashboard.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⚙️ Dashboard</a>
+  <a href="admin.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">🔐 Admin</a>
+</div>
+</body>
+</html>

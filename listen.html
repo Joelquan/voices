@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Grace Community Church · Live</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d0d0d;
+  --surface:#1a1a1a;
+  --surface2:#222222;
+  --border:#2e2e2e;
+  --text:#f0ede8;
+  --muted:#6b6862;
+  --muted2:#4a4744;
+  --accent:#c9933a;
+  --accent-dim:rgba(201,147,58,0.15);
+  --live:#ef4444;
+  --live-dim:rgba(239,68,68,0.15);
+  --success:#22c55e;
+  --radius:16px;
+  --radius-sm:10px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;overflow:hidden}
+
+.app{height:100vh;display:flex;flex-direction:column;max-width:420px;margin:0 auto;position:relative}
+
+/* HEADER */
+.header{padding:10px 20px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.header-brand{display:flex;align-items:center;gap:8px}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--live);animation:livepulse 1.5s infinite}
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.brand-label{font-size:11px;color:var(--live);font-weight:600;letter-spacing:0.8px;text-transform:uppercase}
+.header-actions{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
+.icon-btn:hover,.icon-btn:active{background:var(--surface2);border-color:var(--accent)}
+.icon-btn svg{width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:1.8}
+
+/* STATION HERO */
+.hero{padding:0 20px 12px;flex-shrink:0}
+.station-art{width:100%;height:150px;border-radius:var(--radius);background:linear-gradient(135deg,#1e1209 0%,#2d1a0a 40%,#1a1209 100%);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.station-art-bg{position:absolute;inset:0;opacity:0.06}
+.station-art-bg svg{width:100%;height:100%}
+.station-art-content{text-align:left;z-index:1;padding:16px;display:flex;align-items:center;gap:14px;width:100%}
+.station-cross{width:32px;height:32px;flex-shrink:0;opacity:0.4}
+.station-cross svg{width:32px;height:32px;stroke:var(--accent);fill:none;stroke-width:1.5}
+.station-text{flex:1}
+.station-name{font-family:'DM Serif Display',serif;font-size:17px;line-height:1.2;margin-bottom:2px}
+.station-location{font-size:11px;color:var(--muted);letter-spacing:0.3px}
+
+/* EQ BARS */
+.eq-bars{display:flex;align-items:flex-end;gap:3px;height:28px;margin:16px auto 0;width:fit-content}
+.eq-bar{width:3px;background:var(--accent);border-radius:2px;opacity:0.8;animation:eqanim 0.7s ease-in-out infinite alternate}
+.eq-bar:nth-child(1){animation-delay:0s}
+.eq-bar:nth-child(2){animation-delay:0.1s}
+.eq-bar:nth-child(3){animation-delay:0.2s}
+.eq-bar:nth-child(4){animation-delay:0.05s}
+.eq-bar:nth-child(5){animation-delay:0.15s}
+.eq-bar:nth-child(6){animation-delay:0.25s}
+.eq-bar:nth-child(7){animation-delay:0.08s}
+@keyframes eqanim{from{height:4px}to{height:24px}}
+.eq-bars.paused .eq-bar{animation-paused;height:4px !important}
+
+/* NOW PLAYING INFO */
+.now-playing{padding:0 20px;margin-bottom:10px;flex-shrink:0}
+.np-label{font-size:10px;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px}
+.np-title{font-weight:600;font-size:16px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-sub{font-size:12px;color:var(--muted)}
+
+/* PROGRESS */
+.progress-section{padding:0 20px;margin-bottom:12px;flex-shrink:0}
+.progress-track{height:3px;background:var(--border);border-radius:2px;margin-bottom:8px;cursor:pointer;position:relative}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;width:35%;transition:width 1s linear}
+.progress-fill::after{content:'';position:absolute;right:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.progress-times{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* CONTROLS */
+.controls{padding:0 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0}
+.ctrl-btn{width:44px;height:44px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
+.ctrl-btn:active{transform:scale(0.92)}
+.ctrl-btn svg{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.play-btn{width:60px;height:60px;border-radius:50%;background:var(--accent);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+.play-btn:active{transform:scale(0.93)}
+.play-btn svg{width:24px;height:24px;stroke:#fff;fill:#fff;stroke-width:1.5}
+.listeners-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:6px 12px;border-radius:20px}
+.listeners-dot{width:6px;height:6px;border-radius:50%;background:var(--success)}
+
+/* TABS */
+.tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+.tab{flex:1;padding:12px 8px;text-align:center;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s;border-bottom:2px solid transparent}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* PANELS */
+.panels{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.panel{flex:1;display:none;flex-direction:column;overflow:hidden;position:relative}
+.panel.active{display:flex}
+.panel::-webkit-scrollbar{width:0}
+.msg-scroll{flex:1;overflow-y:auto;padding:16px 20px 0;}
+.msg-scroll::-webkit-scrollbar{width:0}
+
+/* MESSAGES */
+.msg-list{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.msg-item{display:flex;gap:10px;align-items:flex-start}
+.msg-item.own{flex-direction:row-reverse}
+.msg-avatar{width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--muted);flex-shrink:0}
+.msg-bubble{background:var(--surface);border:1px solid var(--border);border-radius:12px;border-top-left-radius:4px;padding:10px 12px;max-width:78%}
+.msg-item.own .msg-bubble{background:var(--accent-dim);border-color:rgba(201,147,58,0.3);border-top-left-radius:12px;border-top-right-radius:4px}
+.msg-name{font-size:11px;font-weight:600;color:var(--accent);margin-bottom:3px}
+.msg-item.own .msg-name{text-align:right}
+.msg-text{font-size:13px;line-height:1.5;color:var(--text)}
+.msg-time{font-size:10px;color:var(--muted);margin-top:4px}
+.msg-item.own .msg-time{text-align:right}
+.voice-msg{display:flex;align-items:center;gap:8px;padding:2px 0}
+.voice-play{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.voice-play svg{width:12px;height:12px;stroke:#fff;fill:#fff}
+.voice-wave{flex:1;height:24px;display:flex;align-items:center;gap:2px}
+.vbar{width:2px;border-radius:1px;background:var(--muted2)}
+.voice-dur{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* INPUT BAR — WhatsApp style */
+@keyframes recpulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.35)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.input-bar{padding:8px 12px;background:var(--bg);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.input-wrap{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:24px;display:flex;align-items:center;padding:0 12px;gap:6px;transition:border-color 0.15s}
+.input-wrap:focus-within{border-color:var(--border)}
+.input-field{flex:1;background:transparent;border:none;padding:10px 0;font-size:14px;color:var(--text);font-family:inherit;outline:none}
+.input-field::placeholder{color:var(--muted)}
+.attach-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;opacity:0.4}
+.attach-btn svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:1.8}
+.action-btn{width:42px;height:42px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s}
+.action-btn:active{transform:scale(0.88)}
+.send-action{background:var(--accent)}
+.send-action svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2}
+.mic-action{background:var(--surface);border:1px solid var(--border)}
+.mic-action svg{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.mic-action.recording{background:var(--live);border-color:var(--live);animation:recpulse 1s infinite}
+.mic-action.recording svg{stroke:#fff}
+/* recording bar replaces input */
+.rec-bar{display:none;flex:1;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--live);border-radius:24px;padding:0 14px;height:42px}
+.rec-bar.active{display:flex}
+.rec-dot{width:8px;height:8px;border-radius:50%;background:var(--live);animation:recpulse 1s infinite;flex-shrink:0}
+.rec-timer{font-size:13px;color:var(--live);font-variant-numeric:tabular-nums;font-weight:500;min-width:34px}
+.rec-wave{flex:1;display:flex;align-items:center;gap:2px;overflow:hidden}
+.rec-wbar{width:2px;border-radius:1px;background:var(--live);opacity:0.6}
+.rec-hint{font-size:11px;color:var(--muted)}
+/* preview bar */
+.prev-bar{display:none;flex:1;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:0 12px;height:42px}
+.prev-bar.active{display:flex}
+.prev-play{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.prev-play svg{width:10px;height:10px;stroke:#fff;fill:#fff}
+.prev-track{flex:1;height:2px;background:var(--border);border-radius:1px;cursor:pointer}
+.prev-fill{height:100%;background:var(--accent);border-radius:1px;width:0%;transition:width 0.3s}
+.prev-dur{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:28px}
+.prev-discard{font-size:18px;line-height:1;cursor:pointer;color:var(--muted);padding:0 2px}
+
+/* PROGRAMME DRAWER */
+.prog-overlay{position:fixed;inset:0;background:rgba(0,0,0,0);display:none;z-index:50;pointer-events:none;transition:background 0.25s}
+.prog-overlay.open{display:block;background:rgba(0,0,0,0.5);pointer-events:all}
+.prog-drawer{position:fixed;top:0;left:0;height:100%;width:78%;max-width:300px;background:var(--surface);transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;display:flex;flex-direction:column;z-index:51}
+.prog-drawer::-webkit-scrollbar{width:0}
+.prog-overlay.open .prog-drawer{transform:translateX(0)}
+.prog-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.prog-title{font-family:'DM Serif Display',serif;font-size:18px}
+.prog-date{font-size:11px;color:var(--muted);padding:10px 16px 6px;letter-spacing:0.3px;text-transform:uppercase}
+.prog-list{display:flex;flex-direction:column;padding:0 0 24px}
+.prog-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.prog-item:last-child{border-bottom:none}
+.prog-item.current-item{background:rgba(201,147,58,0.06)}
+.prog-time{font-size:10px;color:var(--muted);width:44px;flex-shrink:0;font-variant-numeric:tabular-nums;padding-top:2px}
+.prog-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:0;flex-shrink:0;padding-top:4px}
+.prog-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.prog-dot.current{background:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.prog-dot.done{background:var(--muted2)}
+.prog-dot.upcoming{background:var(--border)}
+.prog-info{flex:1;min-width:0}
+.prog-name{font-size:13px;font-weight:500;line-height:1.3}
+.prog-type{font-size:11px;color:var(--muted);margin-top:2px}
+.prog-badge{font-size:9px;padding:2px 6px;border-radius:20px;font-weight:600;flex-shrink:0;margin-top:2px;display:inline-block}
+.pb-worship{background:#1e2d4a;color:#7aabf0}
+.pb-news{background:#1a2e1a;color:#6bcf6b}
+.pb-live{background:#2e1a1a;color:#f08080}
+.pb-weather{background:#1a2e2c;color:#5ecfc4}
+.pb-auto{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+
+/* SHARE SHEET */
+.share-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.share-overlay.open{display:flex}
+.share-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:420px}
+.share-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.share-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px}
+.share-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.share-link{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.share-link-text{flex:1;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy-btn{font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap;background:var(--accent-dim);padding:4px 10px;border-radius:20px}
+.share-options{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.share-opt{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.share-opt-icon{width:48px;height:48px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all 0.15s}
+.share-opt:active .share-opt-icon{transform:scale(0.9)}
+.share-opt-label{font-size:11px;color:var(--muted)}
+.share-close{width:100%;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-60px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:24px;font-size:13px;font-weight:500;transition:all 0.3s;z-index:100;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="icon-btn" onclick="openProg()" title="Programme" style="margin-right:8px">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </div>
+      <div class="brand-dot"></div>
+      <span class="brand-label">Live</span>
+    </div>
+    <div class="header-actions">
+      <div class="icon-btn" id="bellBtn" onclick="toggleBell()" title="Notifications">
+        <svg viewBox="0 0 24 24" id="bellIcon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div class="icon-btn" onclick="openShare()">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="station-art">
+      <div class="station-art-bg">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="200" cy="200" r="180" fill="none" stroke="white" stroke-width="0.5"/>
+          <circle cx="200" cy="200" r="140" fill="none" stroke="white" stroke-width="0.5"/>
+          <circle cx="200" cy="200" r="100" fill="none" stroke="white" stroke-width="0.5"/>
+          <circle cx="200" cy="200" r="60" fill="none" stroke="white" stroke-width="0.5"/>
+        </svg>
+      </div>
+      <div class="station-art-content">
+        <div class="station-cross"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+        <div class="station-text">
+          <div class="station-name">Grace Community Church</div>
+          <div class="station-location">Accra, Ghana</div>
+        </div>
+        <div class="eq-bars" id="eqBars" style="margin:0">
+          <div class="eq-bar" style="height:6px"></div>
+          <div class="eq-bar" style="height:14px"></div>
+          <div class="eq-bar" style="height:10px"></div>
+          <div class="eq-bar" style="height:20px"></div>
+          <div class="eq-bar" style="height:8px"></div>
+          <div class="eq-bar" style="height:16px"></div>
+          <div class="eq-bar" style="height:12px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOW PLAYING -->
+  <div class="now-playing">
+    <div class="np-label">Now Playing</div>
+    <div class="np-title" id="npTitle">Morning Worship Set — Hillsong</div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-section">
+    <div class="progress-track" onclick="seekTrack(event)">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-times">
+      <span id="currentTime">18:24</span>
+      <span id="totalTime">52:00</span>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls" style="justify-content:center">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">
+      <svg viewBox="0 0 24 24" id="playIcon"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+    </button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active">Messages</div>
+  </div>
+
+  <!-- PANELS -->
+  <div class="panels">
+
+    <!-- MESSAGES PANEL -->
+    <div class="panel active" id="panel-messages">
+      <div class="msg-scroll" id="msgScroll">
+      <div class="msg-list" id="msgList">
+        <div class="msg-item">
+          <div class="msg-avatar">AK</div>
+          <div class="msg-bubble">
+            <div class="msg-name">Abena Kofi</div>
+            <div class="msg-text">Good morning church family! Blessed Sunday 🙏</div>
+            <div class="msg-time">7:02 AM</div>
+          </div>
+        </div>
+        <div class="msg-item">
+          <div class="msg-avatar">EO</div>
+          <div class="msg-bubble">
+            <div class="msg-name">Elder Owusu</div>
+            <div class="msg-text">Happy birthday to Brother Kwame Asante! May God bless you abundantly</div>
+            <div class="msg-time">7:08 AM</div>
+          </div>
+        </div>
+        <div class="msg-item">
+          <div class="msg-avatar">SM</div>
+          <div class="msg-bubble">
+            <div class="msg-name">Sister Mary</div>
+            <div class="msg-text">Listening all the way from London 🇬🇧 Miss you all so much</div>
+            <div class="msg-time">7:14 AM</div>
+          </div>
+        </div>
+        <div class="msg-item">
+          <div class="msg-avatar">PA</div>
+          <div class="msg-bubble" style="background:rgba(201,147,58,0.1);border-color:rgba(201,147,58,0.25)">
+            <div class="msg-name" style="color:var(--accent)">Pastor Amos</div>
+            <div class="msg-text">Good morning beloved! We go live at 8AM for the morning devotional. God bless you all 🙌</div>
+            <div class="msg-time">7:20 AM</div>
+          </div>
+        </div>
+        <div class="msg-item">
+          <div class="msg-avatar">JA</div>
+          <div class="msg-bubble">
+            <div class="msg-name">James Adu</div>
+            <div class="msg-text" style="display:flex;align-items:center;gap:8px">
+              <div class="voice-msg">
+                <div class="voice-play" onclick="playVoiceMsg(this)">
+                  <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="voice-wave" id="vwave">
+                </div>
+                <span class="voice-dur">0:18</span>
+              </div>
+            </div>
+            <div class="msg-time">7:31 AM</div>
+          </div>
+        </div>
+        <div class="msg-item own">
+          <div class="msg-avatar" style="background:var(--accent-dim);border-color:rgba(201,147,58,0.3);color:var(--accent)">Me</div>
+          <div class="msg-bubble">
+            <div class="msg-name" style="color:var(--accent)">You</div>
+            <div class="msg-text">Amen! Listening from Kumasi 🙏</div>
+            <div class="msg-time">7:33 AM</div>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- /msg-scroll -->
+      <!-- INPUT BAR -->
+      <div class="input-bar" id="inputBar">
+        <!-- default: attach + text + mic -->
+        <div class="input-wrap" id="inputWrap">
+          <div class="attach-btn"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></div>
+          <input class="input-field" id="msgInput" type="text" placeholder="Message..." onkeydown="if(event.key==='Enter')sendMessage()" oninput="onInputChange()">
+        </div>
+        <!-- recording state -->
+        <div class="rec-bar" id="recBar">
+          <div class="rec-dot"></div>
+          <span class="rec-timer" id="recTimer">0:00</span>
+          <div class="rec-wave" id="recWave"></div>
+          <span class="rec-hint">Release to send</span>
+        </div>
+        <!-- preview state -->
+        <div class="prev-bar" id="prevBar">
+          <div class="prev-play" onclick="previewPlay()"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+          <div class="prev-track" onclick="seekPreview(event)"><div class="prev-fill" id="prevFill"></div></div>
+          <span class="prev-dur" id="prevDur">0:00</span>
+          <span class="prev-discard" onclick="discardRec()">✕</span>
+        </div>
+        <!-- right button: send or mic -->
+        <button class="action-btn send-action" id="sendBtn" onclick="sendMessage()" style="display:none">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+        <button class="action-btn mic-action" id="micBtn"
+          onmousedown="startRec()" onmouseup="stopRec()" onmouseleave="stopRec()"
+          ontouchstart="startRec(event)" ontouchend="stopRec(event)">
+          <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <!-- send preview -->
+        <button class="action-btn send-action" id="sendVoiceBtn" onclick="submitVoice()" style="display:none">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PROGRAMME DRAWER -->
+<div class="prog-overlay" id="progOverlay" onclick="closeProg(event)">
+  <div class="prog-drawer" id="progDrawer">
+    <div class="prog-drawer-header">
+      <div class="prog-title">Programme</div>
+      <div class="icon-btn" onclick="closeProg()" style="width:30px;height:30px">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+    <div class="prog-date">Sunday, June 7</div>
+    <div class="prog-list">
+      <div class="prog-item">
+        <span class="prog-time">5:00 AM</span>
+        <div class="prog-dot done"></div>
+        <div class="prog-info"><div class="prog-name">Early Morning Prayers</div><div class="prog-type">Sermon · 45 min</div></div>
+        <span class="prog-badge pb-auto">Done</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">6:00 AM</span>
+        <div class="prog-dot done"></div>
+        <div class="prog-info"><div class="prog-name">Morning News & Traffic</div><div class="prog-type">Live API feed</div></div>
+        <span class="prog-badge pb-news">News</span>
+      </div>
+      <div class="prog-item current-item">
+        <span class="prog-time">6:30 AM</span>
+        <div class="prog-dot current"></div>
+        <div class="prog-info"><div class="prog-name">Morning Worship Set</div><div class="prog-type">Now playing</div></div>
+        <span class="prog-badge pb-worship">Worship</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">7:45 AM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Accra Weather Update</div><div class="prog-type">Weather API</div></div>
+        <span class="prog-badge pb-weather">Weather</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">8:00 AM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Pastor Amos — Live</div><div class="prog-type">Live broadcast · 30 min</div></div>
+        <span class="prog-badge pb-live">Live</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">9:00 AM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Member Shoutouts</div><div class="prog-type">AI reads approved messages</div></div>
+        <span class="prog-badge pb-auto">Auto</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">10:00 AM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Sunday Sermon Replay</div><div class="prog-type">Uploaded · June 1</div></div>
+        <span class="prog-badge pb-auto">Sermon</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">12:00 PM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Midday Prayers</div><div class="prog-type">Uploaded · 20 min</div></div>
+        <span class="prog-badge pb-auto">Prayer</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">3:00 PM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Afternoon Worship Mix</div><div class="prog-type">Music block</div></div>
+        <span class="prog-badge pb-worship">Worship</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">6:00 PM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Evening News</div><div class="prog-type">Live API feed</div></div>
+        <span class="prog-badge pb-news">News</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">7:00 PM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Youth Bible Study</div><div class="prog-type">Live · Youth team</div></div>
+        <span class="prog-badge pb-live">Live</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-time">9:00 PM</span>
+        <div class="prog-dot upcoming"></div>
+        <div class="prog-info"><div class="prog-name">Night Devotional</div><div class="prog-type">Uploaded · 30 min</div></div>
+        <span class="prog-badge pb-auto">Devotion</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE SHEET -->
+<div class="share-overlay" id="shareOverlay" onclick="closeShare(event)">
+  <div class="share-sheet">
+    <div class="share-handle"></div>
+    <div class="share-title">Share This Station</div>
+    <div class="share-sub">Invite friends and family to tune in</div>
+    <div class="share-link">
+      <span class="share-link-text" id="shareLinkText">localhost:5177/listen.html</span>
+      <span class="copy-btn" onclick="copyLink()">Copy</span>
+    </div>
+    <div class="share-options">
+      <div class="share-opt" onclick="shareVia('WhatsApp')">
+        <div class="share-opt-icon">💬</div>
+        <span class="share-opt-label">WhatsApp</span>
+      </div>
+      <div class="share-opt" onclick="shareVia('SMS')">
+        <div class="share-opt-icon">📱</div>
+        <span class="share-opt-label">SMS</span>
+      </div>
+      <div class="share-opt" onclick="shareVia('Facebook')">
+        <div class="share-opt-icon">📘</div>
+        <span class="share-opt-label">Facebook</span>
+      </div>
+      <div class="share-opt" onclick="shareVia('Email')">
+        <div class="share-opt-icon">✉️</div>
+        <span class="share-opt-label">Email</span>
+      </div>
+    </div>
+    <button class="share-close" onclick="closeShare()">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let isPlaying = true;
+let progress = 35;
+let recordInterval = null;
+let recordSeconds = 0;
+let isRecording = false;
+let hasRecording = false;
+let previewInterval = null;
+let previewProgress = 0;
+let listenerCount = 247;
+let currentStation = {
+  name: 'Grace Community Church',
+  location: 'Accra, Ghana',
+  programme: 'Morning Worship Set - Hillsong',
+  listeners: '247'
+};
+
+function getStationLink(){
+  return new URL('listen.html', window.location.href).href;
+}
+
+function loadCurrentStation(){
+  try {
+    const saved = JSON.parse(localStorage.getItem('voices-current-station') || 'null');
+    if(saved && saved.name) currentStation = {...currentStation, ...saved};
+  } catch(e) {}
+  document.querySelectorAll('.station-name').forEach(el=>{ el.textContent = currentStation.name; });
+  document.querySelectorAll('.station-location').forEach(el=>{ el.textContent = currentStation.location; });
+  document.getElementById('npTitle').textContent = currentStation.programme;
+  document.getElementById('shareLinkText').textContent = getStationLink().replace(/^https?:\/\//, '');
+  const numericListeners = parseInt(String(currentStation.listeners).replace(/,/g,''), 10);
+  if(!Number.isNaN(numericListeners)) listenerCount = numericListeners;
+}
+
+function escapeHtml(value){
+  return value.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+async function copyText(value){
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch(e) {
+    const field = document.createElement('textarea');
+    field.value = value;
+    field.setAttribute('readonly', '');
+    field.style.position = 'fixed';
+    field.style.left = '-9999px';
+    document.body.appendChild(field);
+    field.select();
+    let copied = false;
+    try { copied = document.execCommand('copy'); } catch(err) {}
+    field.remove();
+    return copied;
+  }
+}
+
+loadCurrentStation();
+
+// Build voice wave bars
+const vwave = document.getElementById('vwave');
+for(let i=0;i<20;i++){
+  const b = document.createElement('div');
+  b.className='vbar';
+  b.style.height = (Math.random()*16+4)+'px';
+  vwave.appendChild(b);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function togglePlay(){
+  isPlaying=!isPlaying;
+  const icon=document.getElementById('playIcon');
+  const eq=document.getElementById('eqBars');
+  if(isPlaying){
+    icon.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    eq.classList.remove('paused');
+  } else {
+    icon.innerHTML='<polygon points="5 3 19 12 5 21 5 3"/>';
+    eq.classList.add('paused');
+  }
+}
+
+function seekTrack(e){
+  const rect=e.currentTarget.getBoundingClientRect();
+  progress=(e.clientX-rect.left)/rect.width*100;
+  document.getElementById('progressFill').style.width=progress+'%';
+}
+
+function switchTab(name,el){}
+
+function sendMessage(){
+  const input=document.getElementById('msgInput');
+  const text=input.value.trim();
+  if(!text) return;
+  const list=document.getElementById('msgList');
+  const now=new Date();
+  const time=now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  const item=document.createElement('div');
+  item.className='msg-item own';
+  item.innerHTML=`
+    <div class="msg-avatar" style="background:var(--accent-dim);border-color:rgba(201,147,58,0.3);color:var(--accent)">Me</div>
+    <div class="msg-bubble">
+      <div class="msg-name" style="color:var(--accent)">You</div>
+      <div class="msg-text">${escapeHtml(text)}</div>
+      <div class="msg-time">${time} AM</div>
+    </div>`;
+  list.appendChild(item);
+  input.value='';
+  const scroll=document.getElementById('msgScroll');scroll.scrollTop=scroll.scrollHeight;
+  showToast('Message sent to station');
+}
+
+// Build rec wave bars
+const recWave = document.getElementById('recWave');
+for(let i=0;i<22;i++){const b=document.createElement('div');b.className='rec-wbar';b.style.height='3px';recWave.appendChild(b);}
+
+let recWaveInt=null;
+function startRec(e){
+  if(e) e.preventDefault();
+  if(hasRecording) return;
+  isRecording=true;
+  recordSeconds=0;
+  document.getElementById('inputWrap').style.display='none';
+  document.getElementById('recBar').classList.add('active');
+  document.getElementById('micBtn').classList.add('recording');
+  document.getElementById('sendBtn').style.display='none';
+  const bars=document.querySelectorAll('.rec-wbar');
+  recordInterval=setInterval(()=>{
+    recordSeconds++;
+    const m=Math.floor(recordSeconds/60);
+    const s=recordSeconds%60;
+    document.getElementById('recTimer').textContent=m+':'+(s<10?'0':'')+s;
+    bars.forEach(b=>{b.style.height=(Math.random()*18+3)+'px';});
+    if(recordSeconds>=60) stopRec();
+  },1000);
+}
+
+function stopRec(e){
+  if(e) e.preventDefault();
+  if(!isRecording) return;
+  isRecording=false;
+  hasRecording=true;
+  clearInterval(recordInterval);
+  document.getElementById('recBar').classList.remove('active');
+  document.getElementById('micBtn').classList.remove('recording');
+  if(recordSeconds < 1){
+    // too short — reset
+    hasRecording=false;
+    document.getElementById('inputWrap').style.display='flex';
+    document.getElementById('micBtn').style.display='flex';
+    return;
+  }
+  // show preview
+  const m=Math.floor(recordSeconds/60);
+  const s=recordSeconds%60;
+  document.getElementById('prevDur').textContent=m+':'+(s<10?'0':'')+s;
+  document.getElementById('prevBar').classList.add('active');
+  document.getElementById('micBtn').style.display='none';
+  document.getElementById('sendVoiceBtn').style.display='flex';
+}
+
+function discardRec(){
+  hasRecording=false;
+  recordSeconds=0;
+  document.getElementById('prevBar').classList.remove('active');
+  document.getElementById('prevFill').style.width='0%';
+  document.getElementById('inputWrap').style.display='flex';
+  document.getElementById('micBtn').style.display='flex';
+  document.getElementById('sendVoiceBtn').style.display='none';
+}
+
+function previewPlay(){
+  clearInterval(previewInterval);
+  previewProgress=0;
+  previewInterval=setInterval(()=>{
+    previewProgress+=2;
+    document.getElementById('prevFill').style.width=previewProgress+'%';
+    if(previewProgress>=100){clearInterval(previewInterval);previewProgress=0;}
+  },recordSeconds*10||200);
+}
+
+function seekPreview(e){
+  const rect=e.currentTarget.getBoundingClientRect();
+  previewProgress=(e.clientX-rect.left)/rect.width*100;
+  document.getElementById('prevFill').style.width=previewProgress+'%';
+}
+
+function submitVoice(){
+  showToast('Voice shoutout sent! Pending review 🎙');
+  setTimeout(()=>discardRec(),800);
+}
+
+function onInputChange(){
+  const val=document.getElementById('msgInput').value.trim();
+  document.getElementById('sendBtn').style.display=val?'flex':'none';
+  document.getElementById('micBtn').style.display=val?'none':'flex';
+}
+
+function playVoiceMsg(btn){
+  showToast('Playing voice message...');
+}
+
+function openShare(){
+  document.getElementById('shareOverlay').classList.add('open');
+}
+
+function closeShare(e){
+  if(!e||e.target===document.getElementById('shareOverlay')||e.type==='click'&&!e.target.closest('.share-sheet')){
+    document.getElementById('shareOverlay').classList.remove('open');
+  }
+}
+
+function copyLink(){
+  copyText(getStationLink()).then(ok=>{
+    showToast(ok ? 'Listener link copied' : 'Link ready to copy');
+    document.getElementById('shareOverlay').classList.remove('open');
+  });
+}
+
+function shareVia(platform){
+  const link = getStationLink();
+  if(platform === 'WhatsApp'){
+    window.open('https://wa.me/?text=' + encodeURIComponent('Tune in to ' + currentStation.name + ' on Voices: ' + link), '_blank');
+    document.getElementById('shareOverlay').classList.remove('open');
+    return;
+  }
+  if(platform === 'SMS'){
+    location.href = 'sms:?&body=' + encodeURIComponent('Tune in to ' + currentStation.name + ' on Voices: ' + link);
+    document.getElementById('shareOverlay').classList.remove('open');
+    return;
+  }
+  copyText(link);
+  showToast(platform + ' share link copied');
+  document.getElementById('shareOverlay').classList.remove('open');
+}
+
+
+function openProg(){
+  document.getElementById('progOverlay').classList.add('open');
+}
+function closeProg(e){
+  if(!e){
+    document.getElementById('progOverlay').classList.remove('open');
+    return;
+  }
+  const drawer=document.getElementById('progDrawer');
+  if(!drawer.contains(e.target)){
+    document.getElementById('progOverlay').classList.remove('open');
+  }
+}
+let bellOn = true;
+function toggleBell(){
+  bellOn = !bellOn;
+  const btn = document.getElementById('bellBtn');
+  if(!bellOn){
+    btn.style.borderColor='var(--accent)';
+    btn.style.background='var(--accent-dim)';
+    showToast('Notifications turned off');
+  } else {
+    btn.style.borderColor='var(--border)';
+    btn.style.background='var(--surface)';
+    showToast('Notifications turned on');
+  }
+}
+
+// Progress tick
+setInterval(()=>{
+  if(!isPlaying) return;
+  progress=Math.min(progress+0.03,100);
+  document.getElementById('progressFill').style.width=progress+'%';
+  if(progress>=100) progress=0;
+},1000);
+
+// Listener count flicker
+setInterval(()=>{
+  const delta=Math.floor(Math.random()*5)-2;
+  listenerCount=Math.max(200,listenerCount+delta);
+  const listenerEl = document.getElementById('listenerCount');
+  if(listenerEl) listenerEl.textContent=listenerCount;
+},4000);
+</script>
+<!-- VOICES NAV -->
+<div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+  <a href="index.html" style="background:#c9933a;color:#1a0f00;font-family:sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;text-decoration:none;letter-spacing:0.3px">🎙 Directory</a>
+  <a href="listen.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">📻 Listen</a>
+  <a href="dashboard.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⚙️ Dashboard</a>
+  <a href="admin.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">🔐 Admin</a>
+</div>
+</body>
+</html>

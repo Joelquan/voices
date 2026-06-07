@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voices — 7 Day Launch Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0e0d0b;
+  --surface:#161512;
+  --surface2:#1e1c18;
+  --border:#2a2720;
+  --text:#f2ede6;
+  --muted:#7a7060;
+  --muted2:#4a4438;
+  --gold:#c9933a;
+  --gold-dim:rgba(201,147,58,0.12);
+  --live:#ef4444;
+  --green:#22c55e;
+  --green-dim:rgba(34,197,94,0.1);
+  --blue:#3b82f6;
+  --blue-dim:rgba(59,130,246,0.1);
+  --amber:#f59e0b;
+  --amber-dim:rgba(245,158,11,0.1);
+  --purple:#a855f7;
+  --purple-dim:rgba(168,85,247,0.1);
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:32px 24px;min-height:100vh}
+.page{max-width:900px;margin:0 auto}
+
+/* HEADER */
+.header{margin-bottom:36px}
+.header-top{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.brand{font-family:'Fraunces',serif;font-size:24px;font-weight:300}
+.brand span{color:var(--gold)}
+.header-tag{font-size:11px;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;border:1px solid var(--border);padding:3px 10px;border-radius:20px}
+.header-title{font-family:'Fraunces',serif;font-size:32px;font-weight:300;line-height:1.2;margin-bottom:8px}
+.header-title em{font-style:italic;color:var(--gold)}
+.header-sub{font-size:13px;color:var(--muted);line-height:1.7;max-width:560px}
+
+/* PROGRESS BAR */
+.progress-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:32px;display:flex;align-items:center;gap:16px}
+.prog-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap}
+.prog-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:2px;width:0%;transition:width 1s ease}
+.prog-days{display:flex;gap:0;flex:1;position:relative}
+.prog-day-mark{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.prog-day-dot{width:10px;height:10px;border-radius:50%;background:var(--border);border:2px solid var(--border);transition:all 0.2s;position:relative;z-index:1}
+.prog-day-dot.done{background:var(--green);border-color:var(--green)}
+.prog-day-dot.active{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 4px rgba(201,147,58,0.2)}
+.prog-day-num{font-size:10px;color:var(--muted);font-weight:500}
+
+/* DAYS GRID */
+.days{display:flex;flex-direction:column;gap:14px}
+
+/* DAY CARD */
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color 0.2s;cursor:pointer}
+.day-card:hover{border-color:var(--border2,#3a3628)}
+.day-card.expanded .day-body{display:block}
+.day-card.today{border-color:var(--gold)}
+.day-header{display:flex;align-items:center;gap:14px;padding:16px 20px}
+.day-num{font-family:'Fraunces',serif;font-size:28px;font-weight:300;color:var(--muted);line-height:1;width:32px;flex-shrink:0}
+.day-card.today .day-num{color:var(--gold)}
+.day-card.done-day .day-num{color:var(--green)}
+.day-divider{width:1px;height:36px;background:var(--border);flex-shrink:0}
+.day-meta{flex:1}
+.day-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px}
+.day-title{font-size:15px;font-weight:500;line-height:1.3}
+.day-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.day-tags{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;flex-shrink:0}
+.tag{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:0.3px}
+.tag-build{background:var(--blue-dim);color:var(--blue)}
+.tag-deploy{background:var(--green-dim);color:var(--green)}
+.tag-connect{background:var(--purple-dim);color:var(--purple)}
+.tag-test{background:var(--amber-dim);color:var(--amber)}
+.tag-launch{background:var(--gold-dim);color:var(--gold)}
+.day-chevron{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;transition:transform 0.2s;flex-shrink:0}
+.day-card.expanded .day-chevron{transform:rotate(180deg)}
+
+/* DAY BODY */
+.day-body{display:none;padding:0 20px 18px;border-top:1px solid var(--border)}
+.task-list{display:flex;flex-direction:column;gap:0;margin-top:14px}
+.task{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.task:last-child{border-bottom:none}
+.task-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;margin-top:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;background:transparent}
+.task-check.checked{background:var(--green);border-color:var(--green)}
+.task-check svg{width:10px;height:10px;stroke:#fff;fill:none;stroke-width:3;display:none}
+.task-check.checked svg{display:block}
+.task-content{flex:1}
+.task-title{font-size:13px;font-weight:500;line-height:1.4}
+.task-check.checked + .task-content .task-title{text-decoration:line-through;color:var(--muted)}
+.task-desc{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
+.task-tool{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--gold);background:var(--gold-dim);padding:2px 8px;border-radius:20px;margin-top:4px}
+.task-blocker{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--live);background:rgba(239,68,68,0.1);padding:2px 8px;border-radius:20px;margin-top:4px}
+
+/* DAY FOOTER NOTE */
+.day-note{margin-top:12px;background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6;border-left:3px solid var(--gold)}
+.day-note strong{color:var(--text);font-weight:500}
+
+/* SUMMARY ROW */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.sum-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px}
+.sum-value{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--gold);line-height:1}
+.sum-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* COMPLETED COUNTER */
+.counter-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.counter{font-size:12px;color:var(--muted)}
+.counter span{color:var(--green);font-weight:500}
+.reset-btn{font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.reset-btn:hover{border-color:var(--border);color:var(--text)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="brand">Vo<span>i</span>ces</div>
+      <div class="header-tag">7-Day Launch Plan</div>
+    </div>
+    <div class="header-title">One church. <em>Fully live.</em><br>Seven days.</div>
+    <div class="header-sub">This is your execution roadmap. One church onboarded, station running 24/7, members tuned in via WhatsApp link, pastor able to go live anytime. Every task is actionable today.</div>
+  </div>
+
+  <!-- PROGRESS TRACKER -->
+  <div class="progress-bar">
+    <span class="prog-label">Progress</span>
+    <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+      <div class="prog-track"><div class="prog-fill" id="masterFill"></div></div>
+      <div class="prog-days" id="progDays">
+        <div class="prog-day-mark"><div class="prog-day-dot" id="dot-1"></div><div class="prog-day-num">D1</div></div>
+        <div class="prog-day-mark"><div class="prog-day-dot" id="dot-2"></div><div class="prog-day-num">D2</div></div>
+        <div class="prog-day-mark"><div class="prog-day-dot" id="dot-3"></div><div class="prog-day-num">D3</div></div>
+        <div class="prog-day-mark"><div class="prog-day-dot" id="dot-4"></div><div class="prog-day-num">D4</div></div>
+        <div class="prog-day-mark"><div class="prog-day-dot" id="dot-5"></div><div class="prog-day-num">D5</div></div>
+        <div class="prog-day-mark"><div class="prog-day-dot" id="dot-6"></div><div class="prog-day-num">D6</div></div>
+        <div class="prog-day-mark"><div class="prog-day-dot" id="dot-7"></div><div class="prog-day-num">D7</div></div>
+      </div>
+    </div>
+    <span class="prog-label" id="progressPct" style="color:var(--gold);font-size:14px;font-weight:500">0%</span>
+  </div>
+
+  <div class="counter-row">
+    <div class="counter">Tasks completed: <span id="completedCount">0</span> / <span id="totalCount">0</span></div>
+    <button class="reset-btn" onclick="resetAll()">Reset all</button>
+  </div>
+
+  <div class="days" id="daysContainer"></div>
+
+  <div class="summary">
+    <div class="sum-card"><div class="sum-label">Deploy Target</div><div class="sum-value">Day 2</div><div class="sum-sub">Vercel — fully public</div></div>
+    <div class="sum-card"><div class="sum-label">Church Onboard</div><div class="sum-value">Day 3</div><div class="sum-sub">First station live</div></div>
+    <div class="sum-card"><div class="sum-label">Members Listening</div><div class="sum-value">Day 5</div><div class="sum-sub">WhatsApp link shared</div></div>
+    <div class="sum-card"><div class="sum-label">Fully Live</div><div class="sum-value">Day 7</div><div class="sum-sub">Pastor on air. Done.</div></div>
+  </div>
+
+</div>
+
+<script>
+const DAYS = [
+  {
+    day:1, label:'Day 1 — Today',
+    title:'Fix, Connect & Deploy Foundation',
+    subtitle:'Get the three screens talking to each other',
+    tags:['build','deploy'],
+    note:'<strong>Focus:</strong> Do not build new features today. Only connect what exists. The goal is one URL that loads the Voices directory.',
+    tasks:[
+      {title:'Merge the three HTML files into one Vercel project', desc:'Create a /voices folder with index.html (directory), /listen.html (listener), /dashboard.html (church dashboard), /admin.html (your backend)', tool:'Vercel'},
+      {title:'Set up Vercel project and deploy', desc:'cd voices && vercel --prod. Get a live URL today. Even with mock data.', tool:'Vercel'},
+      {title:'Connect Supabase — create the database', desc:'Create tables: churches, stations, shoutouts, uploads, listeners. No backend logic yet — just the schema.', tool:'Supabase'},
+      {title:'Fix any broken UI issues across all four screens', desc:'Make sure all four pages load cleanly on mobile. Listener screen is the most important — that is what church members will see.'},
+      {title:'Buy the domain', desc:'voices.fm if available, or getvoices.app or tryvoices.com. Connect to Vercel DNS today.'},
+    ]
+  },
+  {
+    day:2, label:'Day 2',
+    title:'Authentication & Church Signup',
+    subtitle:'A church must be able to register themselves',
+    tags:['build','connect'],
+    note:'<strong>Key decision:</strong> Use Supabase Auth for church logins. Email + password is enough for now. No social login needed yet.',
+    tasks:[
+      {title:'Build church signup form — public facing', desc:'Church name, pastor name, country, city, email, password. Saves to Supabase churches table. Sends you a notification email via Brevo.', tool:'Supabase'},
+      {title:'Build church login page', desc:'Simple email/password. On success, redirects to their dashboard. JWT stored in localStorage.'},
+      {title:'Lock the dashboard behind auth', desc:'If no valid session, redirect to login. Each church only sees their own station data.'},
+      {title:'Test signup flow end to end', desc:'Register a fake church yourself. Confirm it appears in your admin backend. Approve it. Confirm the church can now log in.', tool:'Test'},
+      {title:'Set up email notifications to yourself', desc:'Every new signup sends you an email via Brevo. Subject: New church signup — [name]. You approve manually for now.', tool:'Brevo'},
+    ]
+  },
+  {
+    day:3, label:'Day 3',
+    title:'Onboard Your First Real Church',
+    subtitle:'Call someone you know. Get them live today.',
+    tags:['launch','connect'],
+    note:'<strong>This is the most important day.</strong> Do not wait for perfect. Call a church you know personally in Ghana. Walk them through signup on a WhatsApp call. Their imperfect experience tells you everything you need to fix.',
+    tasks:[
+      {title:'Identify your first church — someone you know personally', desc:'A pastor from your West Africa network. Someone who trusts you. Not a stranger. The relationship matters more than the church size.', blocker:true},
+      {title:'Walk them through signup on a WhatsApp video call', desc:'Share your screen or theirs. Do it together. Note every point of confusion — that is your product feedback.'},
+      {title:'Upload their first content for them', desc:'Ask them to send you 2-3 sermon MP3s via WhatsApp. Upload it to their station yourself. Get their station running.'},
+      {title:'Build the basic programme scheduler', desc:'A simple UI where the church sets time slots — 6AM worship, 8AM sermon, 12PM prayers. Saves to Supabase. Station pulls from schedule.', tool:'Build'},
+      {title:'Generate their listener link', desc:'voices.app/[church-slug]. Send it to the pastor. Ask them to share it in their WhatsApp group and see what happens.'},
+    ]
+  },
+  {
+    day:4, label:'Day 4',
+    title:'Streaming Infrastructure',
+    subtitle:'The station must actually play audio 24/7',
+    tags:['build','connect'],
+    note:'<strong>This is the hardest technical day.</strong> Use a managed service — do not build your own streaming server. Radio.co API or Zeno.fm. Budget $30-50 for this. It saves you weeks of work.',
+    tasks:[
+      {title:'Sign up for Radio.co or Zeno.fm API', desc:'Create a station for your first church via their API. Get the stream URL. This is the actual audio that members hear.', tool:'Radio.co'},
+      {title:'Connect uploaded content to the stream', desc:'Uploaded MP3s from Supabase storage get pushed to Radio.co playlist via their API. Scheduler triggers what plays when.'},
+      {title:'Embed the stream in the listener page', desc:'Replace the fake progress bar with a real HTML5 audio element pointing to the Radio.co stream URL. Members can now actually hear audio.'},
+      {title:'Test audio on mobile — iPhone and Android', desc:'Open the listener link on your phone. Press play. Confirm audio works. Test on WiFi and mobile data.', tool:'Test'},
+      {title:'Set up the live button to hand off to Radio.co live source', desc:'When pastor presses Go Live, it opens a Radio.co live broadcast session. Audio switches from automated to pastor voice.'},
+    ]
+  },
+  {
+    day:5, label:'Day 5',
+    title:'Shoutouts & Member Interaction',
+    subtitle:'The community layer — what makes this different from Radio.co',
+    tags:['build'],
+    note:'<strong>This is your moat.</strong> Radio.co cannot do this. The shoutout system is what turns a radio station into a church community tool. Build it properly today.',
+    tasks:[
+      {title:'Connect message input to Supabase', desc:'When a member sends a text message on the listener page, it saves to the shoutouts table with: church_id, member_name, message, type, status=pending.'},
+      {title:'Connect voice recording to Supabase storage', desc:'Voice recordings upload to Supabase storage bucket. Reference saved in shoutouts table. Max 1 minute enforced server-side.'},
+      {title:'Build shoutout approval in the church dashboard', desc:'Pastor sees pending shoutouts. Approves or dismisses. Approved ones appear in the station queue.'},
+      {title:'Build the AI text-to-speech reader', desc:'Approved text shoutouts get converted to audio via ElevenLabs API and injected into the Radio.co playlist at the next shoutout slot.', tool:'ElevenLabs'},
+      {title:'Ask the first church to test shoutouts with 5 members', desc:'Send the link to 5 real members. Ask them to send a message. Watch what comes through. Fix what breaks.', tool:'Test'},
+    ]
+  },
+  {
+    day:6, label:'Day 6',
+    title:'Weather, News & AI Programme Builder',
+    subtitle:'Make the station feel like a real radio station',
+    tags:['build','connect'],
+    note:'<strong>These features are what justify the $50/month</strong> to a pastor. A church WhatsApp group cannot do weather updates. This elevates Voices above a simple streaming tool.',
+    tasks:[
+      {title:'Connect OpenWeatherMap API', desc:'Pull weather for the church city every 3 hours. Store in Supabase. Inject into the daily programme at scheduled slots. TTS via ElevenLabs reads it on air.', tool:'OpenWeatherMap'},
+      {title:'Connect NewsAPI for local Christian/general news', desc:'Pull top 3 headlines for the church country every morning at 6AM. TTS reads them as a morning news segment.', tool:'NewsAPI'},
+      {title:'Build the AI programme builder', desc:'Church selects their content, sets time preferences. Claude API generates a full daily schedule: worship → news → sermon → weather → shoutouts → devotional. One click.', tool:'Claude API'},
+      {title:'Test the full automated day end to end', desc:'Let the station run for 2 hours without touching anything. Confirm it transitions smoothly between segments. Fix any dead air.', tool:'Test'},
+      {title:'Polish the listener experience', desc:'Make sure the now playing title updates correctly. Programme drawer shows the real schedule. Share button works. Mobile feels smooth.'},
+    ]
+  },
+  {
+    day:7, label:'Day 7 — Launch Day',
+    title:'Go Live. Tell the World.',
+    subtitle:'The station is live. The church is on air. You ship.',
+    tags:['launch'],
+    note:'<strong>Do not add features today.</strong> Today is about telling people. One real church on air is enough to show the world what Voices is. Ship it.',
+    tasks:[
+      {title:'Final QA — full flow on mobile', desc:'Sign up → upload content → schedule programme → share listener link → send shoutout → pastor goes live. Do the full loop yourself on your phone.', tool:'Test'},
+      {title:'Record a 2-minute demo video', desc:'Screen record the listener page tuned into the church. Show the play button, the programme, a shoutout going through, the live button. No narration needed — the product speaks.'},
+      {title:'Write a one-paragraph pitch', desc:'Post it on LinkedIn and Twitter/X. Tag the church. Something like: "Built a 24/7 radio station for a church in Ghana in 7 days. Any church anywhere can have one for $50/month. Link below."'},
+      {title:'Share the listener link in 3 WhatsApp groups', desc:'Your personal network, a ministry group, and a tech group. Ask people to tune in and send a shoutout. Real listeners on day one.'},
+      {title:'Send the church pastor a personal WhatsApp', desc:'Tell them what you built for them. Send them the admin dashboard link. Walk them through it. Ask for honest feedback. Their words are your next sprint.'},
+      {title:'Open signups for the next 10 churches', desc:'Add a simple waitlist form to the Voices homepage. Email, church name, country. You will onboard them manually next week.'},
+    ]
+  }
+];
+
+function renderDays(){
+  const container = document.getElementById('daysContainer');
+  const TAG_MAP = {build:'tag-build',deploy:'tag-deploy',connect:'tag-connect',test:'tag-test',launch:'tag-launch'};
+  const TAG_LABELS = {build:'Build',deploy:'Deploy',connect:'Connect',test:'Test',launch:'Launch'};
+
+  DAYS.forEach((d,di)=>{
+    const card = document.createElement('div');
+    card.className = 'day-card' + (di===0?' today':'');
+    card.id = 'day-'+d.day;
+
+    const tagsHTML = d.tags.map(t=>`<span class="tag ${TAG_MAP[t]}">${TAG_LABELS[t]}</span>`).join('');
+
+    const tasksHTML = d.tasks.map((t,ti)=>`
+      <div class="task">
+        <div class="task-check" id="check-${d.day}-${ti}" onclick="toggleTask(${d.day},${ti})">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="task-content">
+          <div class="task-title">${t.title}</div>
+          <div class="task-desc">${t.desc}</div>
+          ${t.tool ? `<span class="task-tool">→ ${t.tool}</span>` : ''}
+          ${t.blocker ? `<span class="task-blocker">⚡ Critical path</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    card.innerHTML = `
+      <div class="day-header" onclick="toggleDay(${d.day})">
+        <div class="day-num">${d.day}</div>
+        <div class="day-divider"></div>
+        <div class="day-meta">
+          <div class="day-label">${d.label}</div>
+          <div class="day-title">${d.title}</div>
+          <div class="day-subtitle">${d.subtitle}</div>
+        </div>
+        <div class="day-tags">${tagsHTML}</div>
+        <svg class="day-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="day-body">
+        <div class="task-list">${tasksHTML}</div>
+        <div class="day-note">${d.note}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Open day 1 by default
+  document.getElementById('day-1').classList.add('expanded');
+  updateCounts();
+}
+
+function toggleDay(n){
+  const card = document.getElementById('day-'+n);
+  card.classList.toggle('expanded');
+}
+
+function toggleTask(day, ti){
+  const key = `voices-task-${day}-${ti}`;
+  const check = document.getElementById(`check-${day}-${ti}`);
+  const isDone = check.classList.contains('checked');
+  if(isDone){
+    check.classList.remove('checked');
+    localStorage.removeItem(key);
+  } else {
+    check.classList.add('checked');
+    localStorage.setItem(key,'1');
+  }
+  updateCounts();
+}
+
+function updateCounts(){
+  const allChecks = document.querySelectorAll('.task-check');
+  const total = allChecks.length;
+  const done = document.querySelectorAll('.task-check.checked').length;
+  document.getElementById('completedCount').textContent = done;
+  document.getElementById('totalCount').textContent = total;
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById('masterFill').style.width = pct+'%';
+  document.getElementById('progressPct').textContent = pct+'%';
+
+  // Update day dots
+  DAYS.forEach(d=>{
+    const dayTasks = d.tasks.length;
+    let dayDone = 0;
+    for(let i=0;i<dayTasks;i++){
+      const c = document.getElementById(`check-${d.day}-${i}`);
+      if(c && c.classList.contains('checked')) dayDone++;
+    }
+    const dot = document.getElementById('dot-'+d.day);
+    if(!dot) return;
+    dot.className = 'prog-day-dot';
+    if(dayDone === dayTasks) dot.classList.add('done');
+    else if(dayDone > 0) dot.classList.add('active');
+  });
+}
+
+function loadSaved(){
+  DAYS.forEach(d=>{
+    d.tasks.forEach((t,ti)=>{
+      const key = `voices-task-${d.day}-${ti}`;
+      if(localStorage.getItem(key)==='1'){
+        const check = document.getElementById(`check-${d.day}-${ti}`);
+        if(check) check.classList.add('checked');
+      }
+    });
+  });
+  updateCounts();
+}
+
+function resetAll(){
+  if(!confirm('Reset all task progress?')) return;
+  document.querySelectorAll('.task-check').forEach(c=>c.classList.remove('checked'));
+  DAYS.forEach(d=>d.tasks.forEach((t,ti)=>localStorage.removeItem(`voices-task-${d.day}-${ti}`)));
+  updateCounts();
+}
+
+renderDays();
+loadSaved();
+</script>
+<!-- VOICES NAV -->
+<div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+  <a href="index.html" style="background:#c9933a;color:#1a0f00;font-family:sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;text-decoration:none;letter-spacing:0.3px">🎙 Directory</a>
+  <a href="listen.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">📻 Listen</a>
+  <a href="dashboard.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⚙️ Dashboard</a>
+  <a href="admin.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">🔐 Admin</a>
+</div>
+</body>
+</html>

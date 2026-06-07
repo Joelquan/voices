@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voices — Church Radio</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e0d0b;
+  --surface:#161512;
+  --surface2:#1e1c18;
+  --border:#2a2720;
+  --border2:#332f27;
+  --text:#f2ede6;
+  --muted:#7a7060;
+  --muted2:#4a4438;
+  --gold:#c9933a;
+  --gold-dim:rgba(201,147,58,0.12);
+  --gold-dim2:rgba(201,147,58,0.06);
+  --live:#ef4444;
+  --live-dim:rgba(239,68,68,0.12);
+  --green:#22c55e;
+  --radius:14px;
+  --radius-sm:8px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+
+/* LAYOUT */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* LEFT DRAWER */
+.drawer{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:40;transform:translateX(0);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);overflow:hidden}
+.drawer.closed{transform:translateX(-100%)}
+.drawer-scroll{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;}
+.drawer-scroll::-webkit-scrollbar{width:0}
+.drawer-brand{padding:22px 20px 16px;border-bottom:1px solid var(--border)}
+.brand-row{display:flex;align-items:center;justify-content:space-between}
+.brand-name{font-family:'Fraunces',serif;font-size:22px;font-weight:300;letter-spacing:-0.5px}
+.brand-name span{color:var(--gold)}
+.drawer-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.4;transition:opacity 0.15s}
+.drawer-close:hover{opacity:1}
+.drawer-close svg{width:14px;height:14px;stroke:var(--text);fill:none;stroke-width:2}
+
+.now-on-air{margin:14px 12px;background:var(--gold-dim);border:1px solid rgba(201,147,58,0.2);border-radius:var(--radius-sm);padding:12px}
+.on-air-label{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--live);animation:livep 1.5s infinite}
+@keyframes livep{0%,100%{opacity:1}50%{opacity:0.3}}
+.on-air-text{font-size:10px;color:var(--live);font-weight:600;letter-spacing:0.8px;text-transform:uppercase}
+.on-air-station{font-size:13px;font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.on-air-prog{font-size:11px;color:var(--muted)}
+.on-air-eq{display:flex;align-items:flex-end;gap:2px;height:16px;margin-top:8px}
+.eq-b{width:2px;background:var(--gold);border-radius:1px;opacity:0.7;animation:eqa 0.7s ease-in-out infinite alternate}
+.eq-b:nth-child(2){animation-delay:.1s}.eq-b:nth-child(3){animation-delay:.2s}.eq-b:nth-child(4){animation-delay:.05s}.eq-b:nth-child(5){animation-delay:.15s}
+@keyframes eqa{from{height:3px}to{height:14px}}
+
+.drawer-section{padding:16px 12px 6px;font-size:10px;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;font-weight:500}
+.drawer-nav{padding:0 8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.15s;margin-bottom:1px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--gold-dim);color:var(--gold)}
+.nav-item svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--live);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px}
+
+.prog-section{padding:0 8px 20px}
+
+.prog-day{font-size:10px;color:var(--muted);letter-spacing:0.6px;text-transform:uppercase;padding:14px 12px 8px}
+.prog-item{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-radius:var(--radius-sm);transition:background 0.15s;cursor:pointer}
+.prog-item:hover{background:var(--surface2)}
+.prog-item.now{background:var(--gold-dim2);border-left:2px solid var(--gold);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.prog-time{font-size:10px;color:var(--muted);width:42px;flex-shrink:0;padding-top:2px;font-variant-numeric:tabular-nums}
+.prog-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.prog-dot.done{background:var(--muted2)}
+.prog-dot.now{background:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
+.prog-dot.soon{background:var(--border2)}
+.prog-info{flex:1;min-width:0}
+.prog-name{font-size:12px;font-weight:500;line-height:1.3}
+.prog-type{font-size:10px;color:var(--muted);margin-top:1px}
+.prog-tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 6px;border-radius:10px;margin-top:3px}
+.tag-worship{background:#1e2d4a;color:#7aabf0}
+.tag-news{background:#1a2e1a;color:#6bcf6b}
+.tag-live{background:#2e1a1a;color:#f08080}
+.tag-weather{background:#1a2e2c;color:#5ecfc4}
+.tag-auto{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+
+/* REGION / COUNTRY NAV */
+.region-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:background 0.15s;margin-bottom:1px}
+.region-item:hover{background:var(--surface2)}
+.region-flag{font-size:14px;flex-shrink:0}
+.region-label{font-size:13px;color:var(--text);flex:1;font-weight:500}
+.region-count{font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:1px 7px;border-radius:20px}
+.region-arrow{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;transition:transform 0.2s;flex-shrink:0}
+.region-arrow.open{transform:rotate(180deg)}
+.country-list{display:none;flex-direction:column;padding:0 0 4px 14px;border-left:1px solid var(--border);margin:0 12px 6px 20px}
+.country-list.open{display:flex}
+.country-item{display:flex;align-items:center;padding:7px 10px;font-size:12px;color:var(--muted);cursor:pointer;border-radius:var(--radius-sm);transition:all 0.15s;gap:6px}
+.country-item:hover{background:var(--surface2);color:var(--text)}
+.country-count{margin-left:auto;font-size:10px;color:var(--muted2)}
+
+/* OVERLAY */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:39;display:none}
+.drawer-overlay.open{display:block}
+
+/* MAIN */
+.main{flex:1;margin-left:260px;display:flex;flex-direction:column;height:100vh;overflow-y:auto;overflow-x:hidden;transition:margin 0.28s}
+.main.expanded{margin-left:0}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:30}
+.menu-btn{width:36px;height:36px;border-radius:var(--radius-sm);background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s}
+.menu-btn:hover{background:var(--surface2)}
+.menu-btn svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:1.8}
+.topbar-brand{font-family:'Fraunces',serif;font-size:20px;font-weight:300;letter-spacing:-0.3px;flex-shrink:0}
+.topbar-brand span{color:var(--gold)}
+.search-wrap{flex:1;max-width:420px;position:relative}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:24px;padding:9px 14px 9px 36px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:border-color 0.15s}
+.search-input::placeholder{color:var(--muted)}
+.search-input:focus{border-color:var(--gold)}
+.topbar-right{margin-left:auto;display:flex;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:24px;font-size:12px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all 0.15s}
+.tb-btn:hover{border-color:var(--gold);color:var(--gold)}
+.tb-btn-primary{background:var(--gold);color:#1a0f00;border-color:var(--gold)}
+.tb-btn-primary:hover{background:#d4a04a}
+
+/* CONTENT */
+.content{padding:24px}
+
+/* HERO STRIP */
+.hero-strip{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;overflow:hidden;position:relative}
+.hero-strip::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:var(--gold-dim);pointer-events:none}
+.hero-text{flex:1;z-index:1}
+.hero-title{font-family:'Fraunces',serif;font-size:26px;font-weight:300;line-height:1.2;margin-bottom:6px}
+.hero-title em{font-style:italic;color:var(--gold)}
+.hero-sub{font-size:13px;color:var(--muted);line-height:1.6}
+.hero-stats{display:flex;gap:20px;z-index:1;flex-shrink:0}
+.hero-stat{text-align:center}
+.hero-stat-num{font-family:'Fraunces',serif;font-size:28px;font-weight:300;color:var(--gold);line-height:1}
+.hero-stat-label{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+
+/* CATEGORY TABS */
+.cat-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px;scrollbar-width:none}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-tab{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:24px;font-size:12px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--muted);white-space:nowrap;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+.cat-tab:hover{border-color:var(--border2);color:var(--text)}
+.cat-tab.active{background:var(--gold);color:#1a0f00;border-color:var(--gold)}
+.cat-tab svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:'Fraunces',serif;font-size:18px;font-weight:300}
+.section-link{font-size:12px;color:var(--muted);cursor:pointer;transition:color 0.15s}
+.section-link:hover{color:var(--gold)}
+
+/* STATION CARDS GRID */
+.stations-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:32px}
+.station-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative}
+.station-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.station-card:hover .card-art-overlay{opacity:1}
+.card-art{height:130px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.card-art-bg{position:absolute;inset:0}
+.card-art-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.3);opacity:0;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center}
+.card-tune-btn{background:var(--gold);color:#1a0f00;border:none;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;font-family:inherit}
+.card-art-icon{z-index:1;opacity:0.3}
+.card-art-icon svg{width:36px;height:36px;stroke:var(--gold);fill:none;stroke-width:1}
+.card-live-badge{position:absolute;top:8px;left:8px;background:var(--live);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;letter-spacing:0.5px;text-transform:uppercase}
+.card-live-badge .ldot{width:5px;height:5px;border-radius:50%;background:#fff;animation:livep 1s infinite}
+.card-body{padding:12px 14px}
+.card-name{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-location{font-size:11px;color:var(--muted);margin-bottom:6px}
+.card-now{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-now-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.card-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-top:1px solid var(--border)}
+.card-cat{font-size:10px;color:var(--muted);font-weight:500}
+.card-listeners{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.card-listeners svg{width:11px;height:11px;stroke:var(--muted);fill:none;stroke-width:2}
+
+/* FEATURED ROW */
+.featured-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px}
+.featured-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;gap:14px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden}
+.featured-card::after{content:'';position:absolute;right:-20px;bottom:-20px;width:100px;height:100px;border-radius:50%;background:var(--gold-dim2)}
+.featured-card:hover{border-color:var(--gold)}
+.featured-art{width:60px;height:60px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative}
+.featured-art svg{width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:1.2;opacity:0.6}
+.feat-info{flex:1;min-width:0;z-index:1}
+.feat-name{font-family:'Fraunces',serif;font-size:15px;font-weight:400;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feat-loc{font-size:11px;color:var(--muted);margin-bottom:6px}
+.feat-prog{font-size:11px;color:var(--text);display:flex;align-items:center;gap:5px}
+.feat-prog-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0;animation:livep 2s infinite}
+.feat-tune{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:11px;font-weight:600;color:var(--gold)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;transition:all 0.3s;z-index:100;white-space:nowrap;opacity:0}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* MINI PLAYER */
+.mini-player{position:fixed;bottom:0;left:260px;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 24px;display:none;align-items:center;gap:16px;z-index:35;transition:left 0.28s}
+.mini-player.show{display:flex}
+.mini-player.expanded{left:0}
+.mp-art{width:40px;height:40px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border)}
+.mp-art svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.5;opacity:0.7}
+.mp-info{flex:1;min-width:0}
+.mp-station{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-prog{font-size:11px;color:var(--muted)}
+.mp-eq{display:flex;align-items:flex-end;gap:2px;height:16px}
+.mp-bar{width:2px;background:var(--gold);border-radius:1px;opacity:0.8;animation:eqa 0.7s ease-in-out infinite alternate}
+.mp-bar:nth-child(2){animation-delay:.1s}.mp-bar:nth-child(3){animation-delay:.2s}.mp-bar:nth-child(4){animation-delay:.05s}
+.mp-play{width:36px;height:36px;border-radius:50%;background:var(--gold);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.mp-play svg{width:14px;height:14px;stroke:#1a0f00;fill:#1a0f00}
+.mp-close{width:28px;height:28px;border-radius:50%;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.4;flex-shrink:0}
+.mp-close:hover{opacity:1}
+.mp-close svg{width:14px;height:14px;stroke:var(--text);fill:none;stroke-width:2}
+</style>
+</head>
+<body>
+
+<!-- DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- LEFT DRAWER -->
+<div class="drawer" id="drawer">
+  <div class="drawer-brand">
+    <div class="brand-row">
+      <div class="brand-name">Vo<span>i</span>ces</div>
+      <div class="drawer-close" onclick="closeDrawer()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-scroll">
+  <!-- NOW ON AIR -->
+  <div class="now-on-air" id="drawerNowAir" style="display:none">
+    <div class="on-air-label">
+      <div class="live-dot"></div>
+      <span class="on-air-text">Now Listening</span>
+    </div>
+    <div class="on-air-station" id="drawerStation">—</div>
+    <div class="on-air-prog" id="drawerProg">—</div>
+    <div class="on-air-eq">
+      <div class="eq-b" style="height:4px"></div>
+      <div class="eq-b" style="height:10px"></div>
+      <div class="eq-b" style="height:6px"></div>
+      <div class="eq-b" style="height:14px"></div>
+      <div class="eq-b" style="height:8px"></div>
+    </div>
+  </div>
+
+  <div class="drawer-section">Navigation</div>
+  <div class="drawer-nav">
+    <div class="nav-item active" onclick="setNav(this,'All Stations')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      All Stations
+    </div>
+    <div class="nav-item" onclick="setNav(this,'Live Now')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49M7.76 16.24a6 6 0 010-8.49"/></svg>
+      Live Now
+      <span class="nav-badge">6</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'Favourites')">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      Favourites
+    </div>
+    <div class="nav-item" onclick="setNav(this,'Recently Played')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Recently Played
+    </div>
+  </div>
+
+  <!-- COUNTRIES COLLAPSIBLE -->
+  <div class="drawer-section" style="margin-top:8px">Browse by Country</div>
+  <div class="drawer-nav" style="padding-bottom:4px">
+
+    <div class="region-item" onclick="toggleRegion('africa')">
+      <span class="region-flag">🌍</span>
+      <span class="region-label">Africa</span>
+      <span class="region-count">142</span>
+      <svg class="region-arrow" id="arrow-africa" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="country-list" id="region-africa">
+      <div class="country-item" onclick="filterCountry('Ghana')">🇬🇭 Ghana <span class="country-count">38</span></div>
+      <div class="country-item" onclick="filterCountry('Nigeria')">🇳🇬 Nigeria <span class="country-count">54</span></div>
+      <div class="country-item" onclick="filterCountry('Kenya')">🇰🇪 Kenya <span class="country-count">21</span></div>
+      <div class="country-item" onclick="filterCountry('South Africa')">🇿🇦 South Africa <span class="country-count">17</span></div>
+      <div class="country-item" onclick="filterCountry('Uganda')">🇺🇬 Uganda <span class="country-count">8</span></div>
+      <div class="country-item" onclick="filterCountry('Tanzania')">🇹🇿 Tanzania <span class="country-count">4</span></div>
+    </div>
+
+    <div class="region-item" onclick="toggleRegion('americas')">
+      <span class="region-flag">🌎</span>
+      <span class="region-label">Americas</span>
+      <span class="region-count">51</span>
+      <svg class="region-arrow" id="arrow-americas" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="country-list" id="region-americas">
+      <div class="country-item" onclick="filterCountry('USA')">🇺🇸 United States <span class="country-count">22</span></div>
+      <div class="country-item" onclick="filterCountry('Brazil')">🇧🇷 Brazil <span class="country-count">14</span></div>
+      <div class="country-item" onclick="filterCountry('Colombia')">🇨🇴 Colombia <span class="country-count">9</span></div>
+      <div class="country-item" onclick="filterCountry('Mexico')">🇲🇽 Mexico <span class="country-count">6</span></div>
+    </div>
+
+    <div class="region-item" onclick="toggleRegion('europe')">
+      <span class="region-flag">🌍</span>
+      <span class="region-label">Europe</span>
+      <span class="region-count">28</span>
+      <svg class="region-arrow" id="arrow-europe" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="country-list" id="region-europe">
+      <div class="country-item" onclick="filterCountry('UK')">🇬🇧 United Kingdom <span class="country-count">12</span></div>
+      <div class="country-item" onclick="filterCountry('Germany')">🇩🇪 Germany <span class="country-count">7</span></div>
+      <div class="country-item" onclick="filterCountry('Netherlands')">🇳🇱 Netherlands <span class="country-count">5</span></div>
+      <div class="country-item" onclick="filterCountry('France')">🇫🇷 France <span class="country-count">4</span></div>
+    </div>
+
+    <div class="region-item" onclick="toggleRegion('asia')">
+      <span class="region-flag">🌏</span>
+      <span class="region-label">Asia & Pacific</span>
+      <span class="region-count">27</span>
+      <svg class="region-arrow" id="arrow-asia" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="country-list" id="region-asia">
+      <div class="country-item" onclick="filterCountry('Philippines')">🇵🇭 Philippines <span class="country-count">11</span></div>
+      <div class="country-item" onclick="filterCountry('South Korea')">🇰🇷 South Korea <span class="country-count">8</span></div>
+      <div class="country-item" onclick="filterCountry('India')">🇮🇳 India <span class="country-count">5</span></div>
+      <div class="country-item" onclick="filterCountry('Australia')">🇦🇺 Australia <span class="country-count">3</span></div>
+    </div>
+
+  </div>
+
+  <div class="drawer-section" style="margin-top:8px">Today's Programme</div>
+  <div class="prog-section">
+    <div class="prog-day">Sunday, June 7</div>
+
+    <div class="prog-item">
+      <span class="prog-time">5:00 AM</span>
+      <div class="prog-dot done"></div>
+      <div class="prog-info"><div class="prog-name">Early Morning Prayers</div><div class="prog-type">Sermon · 45 min</div><span class="prog-tag tag-auto">Done</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">6:00 AM</span>
+      <div class="prog-dot done"></div>
+      <div class="prog-info"><div class="prog-name">Morning News & Traffic</div><div class="prog-type">Live API feed</div><span class="prog-tag tag-news">News</span></div>
+    </div>
+    <div class="prog-item now">
+      <span class="prog-time">6:30 AM</span>
+      <div class="prog-dot now"></div>
+      <div class="prog-info"><div class="prog-name">Morning Worship Set</div><div class="prog-type">Now playing</div><span class="prog-tag tag-worship">Worship</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">7:45 AM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Accra Weather Update</div><div class="prog-type">Weather API</div><span class="prog-tag tag-weather">Weather</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">8:00 AM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Pastor Amos — Live</div><div class="prog-type">Live broadcast · 30 min</div><span class="prog-tag tag-live">Live</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">9:00 AM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Member Shoutouts</div><div class="prog-type">AI reads messages</div><span class="prog-tag tag-auto">Auto</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">10:00 AM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Sunday Sermon Replay</div><div class="prog-type">Uploaded · June 1</div><span class="prog-tag tag-auto">Sermon</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">12:00 PM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Midday Prayers</div><div class="prog-type">Uploaded · 20 min</div><span class="prog-tag tag-auto">Prayer</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">3:00 PM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Afternoon Worship Mix</div><div class="prog-type">Music block</div><span class="prog-tag tag-worship">Worship</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">6:00 PM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Evening News</div><div class="prog-type">Live API feed</div><span class="prog-tag tag-news">News</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">7:00 PM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Youth Bible Study</div><div class="prog-type">Live · Youth team</div><span class="prog-tag tag-live">Live</span></div>
+    </div>
+    <div class="prog-item">
+      <span class="prog-time">9:00 PM</span>
+      <div class="prog-dot soon"></div>
+      <div class="prog-info"><div class="prog-name">Night Devotional</div><div class="prog-type">Uploaded · 30 min</div><span class="prog-tag tag-auto">Devotion</span></div>
+    </div>
+  </div>
+  </div><!-- /drawer-scroll -->
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="menu-btn" onclick="toggleDrawer()">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="topbar-brand">Vo<span>i</span>ces</div>
+    <div class="search-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" type="text" placeholder="Search churches, cities, countries..." oninput="onSearch(this.value)">
+    </div>
+    <div class="topbar-right">
+      <button class="tb-btn" onclick="location.href='dashboard.html'">Church dashboard</button>
+      <button class="tb-btn tb-btn-primary" onclick="location.href='admin.html'">Add your church</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- HERO -->
+    <div class="hero-strip">
+      <div class="hero-text">
+        <div class="hero-title">Every church has a <em>voice.</em><br>Now the world can hear it.</div>
+        <div class="hero-sub">24/7 radio stations for churches everywhere. Tune in from anywhere.</div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num" id="statStations">248</div>
+          <div class="hero-stat-label">Stations</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num" id="statLive">24</div>
+          <div class="hero-stat-label">Live Now</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">38</div>
+          <div class="hero-stat-label">Countries</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORY TABS -->
+    <div class="cat-scroll">
+      <button class="cat-tab active" onclick="setCategory(this,'All')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        All
+      </button>
+      <button class="cat-tab" onclick="setCategory(this,'Live Now')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49M7.76 16.24a6 6 0 010-8.49"/></svg>
+        Live Now
+      </button>
+      <button class="cat-tab" onclick="setCategory(this,'Worship')">
+        <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        Worship
+      </button>
+      <button class="cat-tab" onclick="setCategory(this,'Sermon')">Sermon</button>
+      <button class="cat-tab" onclick="setCategory(this,'Prayer')">Prayer</button>
+      <button class="cat-tab" onclick="setCategory(this,'Youth')">Youth</button>
+      <button class="cat-tab" onclick="setCategory(this,'News')">News & World</button>
+    </div>
+
+    <!-- FEATURED -->
+    <div class="section-header">
+      <div class="section-title">Featured Stations</div>
+      <div class="section-link">See all →</div>
+    </div>
+    <div class="featured-row" id="featuredRow">
+      <div class="featured-card" onclick="tuneIn('Grace Community Church','Morning Worship Set')">
+        <div class="featured-art" style="background:linear-gradient(135deg,#1e1209,#2d1a0a)">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
+        </div>
+        <div class="feat-info">
+          <div class="feat-name">Grace Community Church</div>
+          <div class="feat-loc">Accra, Ghana</div>
+          <div class="feat-prog"><div class="feat-prog-dot"></div>Morning Worship Set</div>
+          <div class="feat-tune">Tune in →</div>
+        </div>
+      </div>
+      <div class="featured-card" onclick="tuneIn('Redeemed Gospel Church','Live — Pastor Emeka')">
+        <div class="featured-art" style="background:linear-gradient(135deg,#0d1e12,#1a2e18)">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
+        </div>
+        <div class="feat-info">
+          <div class="feat-name">Redeemed Gospel Church</div>
+          <div class="feat-loc">Lagos, Nigeria</div>
+          <div class="feat-prog"><div class="feat-prog-dot" style="background:var(--live)"></div>Live — Pastor Emeka</div>
+          <div class="feat-tune">Tune in →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL STATIONS -->
+    <div class="section-header">
+      <div class="section-title" id="gridTitle">All Stations</div>
+      <div class="section-link">248 stations</div>
+    </div>
+    <div class="stations-grid" id="stationsGrid">
+
+      <div class="station-card" onclick="tuneIn('Grace Community Church','Morning Worship Set')">
+        <div class="card-art" style="background:linear-gradient(135deg,#1e1209,#2d1a0a)">
+          <div class="card-art-bg"></div>
+          <div class="card-live-badge"><div class="ldot"></div>Live</div>
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">Grace Community Church</div>
+          <div class="card-location">Accra, Ghana</div>
+          <div class="card-now"><div class="card-now-dot"></div>Morning Worship Set</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Pentecostal</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>247</span>
+        </div>
+      </div>
+
+      <div class="station-card" onclick="tuneIn('Redeemed Gospel Church','Live — Pastor Emeka')">
+        <div class="card-art" style="background:linear-gradient(135deg,#0d1e12,#1a2e18)">
+          <div class="card-live-badge"><div class="ldot"></div>Live</div>
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">Redeemed Gospel Church</div>
+          <div class="card-location">Lagos, Nigeria</div>
+          <div class="card-now"><div class="card-now-dot" style="background:var(--live)"></div>Live — Pastor Emeka</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Pentecostal</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>1,204</span>
+        </div>
+      </div>
+
+      <div class="station-card" onclick="tuneIn('Calvary Baptist Church','Sunday Sermon Replay')">
+        <div class="card-art" style="background:linear-gradient(135deg,#0d0d1e,#181828)">
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">Calvary Baptist Church</div>
+          <div class="card-location">Nairobi, Kenya</div>
+          <div class="card-now"><div class="card-now-dot"></div>Sunday Sermon Replay</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Baptist</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>89</span>
+        </div>
+      </div>
+
+      <div class="station-card" onclick="tuneIn('Victory Praise Centre','Afternoon Worship Mix')">
+        <div class="card-art" style="background:linear-gradient(135deg,#1e150d,#2a1e0f)">
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">Victory Praise Centre</div>
+          <div class="card-location">Kumasi, Ghana</div>
+          <div class="card-now"><div class="card-now-dot"></div>Afternoon Worship Mix</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Charismatic</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>312</span>
+        </div>
+      </div>
+
+      <div class="station-card" onclick="tuneIn('City Harvest Church','Evening Devotional')">
+        <div class="card-art" style="background:linear-gradient(135deg,#0e1a1e,#152428)">
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">City Harvest Church</div>
+          <div class="card-location">Johannesburg, SA</div>
+          <div class="card-now"><div class="card-now-dot"></div>Evening Devotional</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Reformed</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>156</span>
+        </div>
+      </div>
+
+      <div class="station-card" onclick="tuneIn('Living Word Ministries','Midday Prayers')">
+        <div class="card-art" style="background:linear-gradient(135deg,#1a0d1e,#261428)">
+          <div class="card-live-badge"><div class="ldot"></div>Live</div>
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">Living Word Ministries</div>
+          <div class="card-location">Manila, Philippines</div>
+          <div class="card-now"><div class="card-now-dot" style="background:var(--live)"></div>Live — Prayer Service</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Evangelical</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>528</span>
+        </div>
+      </div>
+
+      <div class="station-card" onclick="tuneIn('Cornerstone Church','Youth Bible Study')">
+        <div class="card-art" style="background:linear-gradient(135deg,#0f1a0d,#172614)">
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">Cornerstone Church</div>
+          <div class="card-location">London, UK</div>
+          <div class="card-now"><div class="card-now-dot"></div>Youth Bible Study</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Charismatic</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>74</span>
+        </div>
+      </div>
+
+      <div class="station-card" onclick="tuneIn('Hope Chapel','Morning Devotional')">
+        <div class="card-art" style="background:linear-gradient(135deg,#1a1209,#261c0e)">
+          <div class="card-art-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
+          <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
+        </div>
+        <div class="card-body">
+          <div class="card-name">Hope Chapel</div>
+          <div class="card-location">São Paulo, Brazil</div>
+          <div class="card-now"><div class="card-now-dot"></div>Morning Devotional</div>
+        </div>
+        <div class="card-footer">
+          <span class="card-cat">Evangelical</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>193</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MINI PLAYER -->
+<div class="mini-player" id="miniPlayer">
+  <div class="mp-art">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
+  </div>
+  <div class="mp-info">
+    <div class="mp-station" id="mpStation">—</div>
+    <div class="mp-prog" id="mpProg">—</div>
+  </div>
+  <div class="mp-eq">
+    <div class="mp-bar" style="height:4px"></div>
+    <div class="mp-bar" style="height:10px"></div>
+    <div class="mp-bar" style="height:6px"></div>
+    <div class="mp-bar" style="height:14px"></div>
+  </div>
+  <button class="mp-play" onclick="toggleMpPlay()">
+    <svg viewBox="0 0 24 24" id="mpIcon"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+  </button>
+  <button class="mp-close" onclick="closeMiniPlayer()">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let drawerOpen = true;
+let mpPlaying = false;
+const STATION_DATA = {
+  'Grace Community Church': {location:'Accra, Ghana', programme:'Morning Worship Set', listeners:'247'},
+  'Redeemed Gospel Church': {location:'Lagos, Nigeria', programme:'Live - Pastor Emeka', listeners:'1,204'},
+  'Calvary Baptist Church': {location:'Nairobi, Kenya', programme:'Sunday Sermon Replay', listeners:'89'},
+  'Victory Praise Centre': {location:'Kumasi, Ghana', programme:'Afternoon Worship Mix', listeners:'312'},
+  'City Harvest Church': {location:'Johannesburg, South Africa', programme:'Evening Devotional', listeners:'156'},
+  'Living Word Ministries': {location:'Manila, Philippines', programme:'Live - Prayer Service', listeners:'528'},
+  'Cornerstone Church': {location:'London, UK', programme:'Youth Bible Study', listeners:'74'},
+  'Hope Chapel': {location:'Sao Paulo, Brazil', programme:'Morning Devotional', listeners:'193'}
+};
+
+function toggleDrawer(){
+  drawerOpen = !drawerOpen;
+  const drawer = document.getElementById('drawer');
+  const main = document.getElementById('main');
+  const mp = document.getElementById('miniPlayer');
+  const overlay = document.getElementById('drawerOverlay');
+  if(drawerOpen){
+    drawer.classList.remove('closed');
+    main.classList.remove('expanded');
+    mp.classList.remove('expanded');
+    // on mobile show overlay
+    if(window.innerWidth < 768) overlay.classList.add('open');
+  } else {
+    drawer.classList.add('closed');
+    main.classList.add('expanded');
+    mp.classList.add('expanded');
+    overlay.classList.remove('open');
+  }
+}
+
+function closeDrawer(){
+  drawerOpen = false;
+  document.getElementById('drawer').classList.add('closed');
+  document.getElementById('main').classList.add('expanded');
+  document.getElementById('miniPlayer').classList.add('expanded');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+function setNav(el, label){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('gridTitle').textContent = label;
+  showToast('Showing: ' + label);
+}
+
+function setCategory(el, cat){
+  document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('gridTitle').textContent = cat === 'All' ? 'All Stations' : cat;
+}
+
+function tuneIn(station, prog){
+  const data = STATION_DATA[station] || {};
+  const payload = {
+    name: station,
+    location: data.location || 'Accra, Ghana',
+    programme: prog || data.programme || 'Live station',
+    listeners: data.listeners || '247'
+  };
+  localStorage.setItem('voices-current-station', JSON.stringify(payload));
+  document.getElementById('mpStation').textContent = station;
+  document.getElementById('mpProg').textContent = payload.programme;
+  document.getElementById('miniPlayer').classList.add('show');
+  document.getElementById('drawerStation').textContent = station;
+  document.getElementById('drawerProg').textContent = payload.programme;
+  document.getElementById('drawerNowAir').style.display = 'block';
+  mpPlaying = true;
+  document.getElementById('mpIcon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  showToast('Opening ' + station);
+  setTimeout(()=>{ location.href = 'listen.html'; }, 450);
+}
+
+function toggleMpPlay(){
+  mpPlaying = !mpPlaying;
+  document.getElementById('mpIcon').innerHTML = mpPlaying
+    ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+    : '<polygon points="5 3 19 12 5 21 5 3"/>';
+}
+
+function closeMiniPlayer(){
+  document.getElementById('miniPlayer').classList.remove('show');
+  document.getElementById('drawerNowAir').style.display = 'none';
+  mpPlaying = false;
+}
+
+function onSearch(val){
+  const cards = document.querySelectorAll('.station-card');
+  const q = val.toLowerCase();
+  cards.forEach(c=>{
+    const name = c.querySelector('.card-name').textContent.toLowerCase();
+    const loc = c.querySelector('.card-location').textContent.toLowerCase();
+    c.style.display = (!q || name.includes(q) || loc.includes(q)) ? 'block' : 'none';
+  });
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+// Isolate drawer scroll from main
+document.addEventListener('DOMContentLoaded', function(){
+  const drawerScroll = document.querySelector('.drawer-scroll');
+  if(drawerScroll){
+    drawerScroll.addEventListener('wheel', function(e){ e.stopPropagation(); }, {passive:true});
+    drawerScroll.addEventListener('touchmove', function(e){ e.stopPropagation(); }, {passive:true});
+  }
+});
+
+function toggleRegion(id){
+  const list = document.getElementById('region-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  const isOpen = list.classList.contains('open');
+  list.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
+}
+
+function filterCountry(country){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('gridTitle').textContent = country;
+  showToast('Showing stations in ' + country);
+}
+
+// Responsive — close drawer on small screens by default
+if(window.innerWidth < 900){
+  document.getElementById('drawer').classList.add('closed');
+  document.getElementById('main').classList.add('expanded');
+  document.getElementById('miniPlayer').classList.add('expanded');
+  drawerOpen = false;
+}
+</script>
+<!-- VOICES NAV -->
+<div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+  <a href="index.html" style="background:#c9933a;color:#1a0f00;font-family:sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;text-decoration:none;letter-spacing:0.3px">🎙 Directory</a>
+  <a href="listen.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">📻 Listen</a>
+  <a href="dashboard.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⚙️ Dashboard</a>
+  <a href="admin.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">🔐 Admin</a>
+</div>
+</body>
+</html>
