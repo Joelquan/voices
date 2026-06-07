@@ -126,11 +126,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sched-name{font-size:13px;font-weight:500}
 .sched-type{font-size:11px;color:var(--muted);margin-top:1px}
 .sched-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.slot-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
+.slot-chip{font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 7px}
+.slot-actions{display:flex;align-items:center;gap:4px;margin-left:auto}
+.slot-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
+.slot-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.schedule-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.schedule-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:12px}
 .type-worship{background:#eff6ff;color:#1d4ed8}
 .type-news{background:#f0fdf4;color:#15803d}
 .type-auto{background:#fafaf9;color:#78716c;border:1px solid var(--border)}
 .type-live{background:var(--live-light);color:var(--live)}
 .type-weather{background:#f0fdfa;color:#0f766e}
+.type-announcement{background:#fef3c7;color:#92400e}
 
 /* SHOUTOUTS */
 .shoutout-list{display:flex;flex-direction:column;gap:8px}
@@ -350,65 +358,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <!-- PROGRAMME -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Today's Programme</span>
-            <span class="card-action">Edit Schedule →</span>
+            <span class="card-title">Today's 15-Minute Schedule</span>
+            <span class="card-action" onclick="addSlot()">Add Slot +</span>
           </div>
-          <div class="schedule-list">
-            <div class="schedule-item">
-              <span class="sched-time">5:00 AM</span>
-              <div class="sched-dot done"></div>
-              <div class="sched-info">
-                <div class="sched-name">Early Morning Prayers</div>
-                <div class="sched-type">Uploaded sermon · 45 min</div>
-              </div>
-              <span class="sched-badge type-auto">Done</span>
-            </div>
-            <div class="schedule-item">
-              <span class="sched-time">6:00 AM</span>
-              <div class="sched-dot done"></div>
-              <div class="sched-info">
-                <div class="sched-name">Morning News & Traffic</div>
-              <div class="sched-type">Auto · Local bulletin</div>
-              </div>
-              <span class="sched-badge type-news">News</span>
-            </div>
-            <div class="schedule-item">
-              <span class="sched-time">6:30 AM</span>
-              <div class="sched-dot current"></div>
-              <div class="sched-info">
-                <div class="sched-name">Morning Worship Set</div>
-                <div class="sched-type">Automated · Now Playing</div>
-              </div>
-              <span class="sched-badge type-worship">Worship</span>
-            </div>
-            <div class="schedule-item">
-              <span class="sched-time">7:45 AM</span>
-              <div class="sched-dot upcoming"></div>
-              <div class="sched-info">
-                <div class="sched-name">Accra Weather Update</div>
-              <div class="sched-type">Auto · Weather update</div>
-              </div>
-              <span class="sched-badge type-weather">Weather</span>
-            </div>
-            <div class="schedule-item">
-              <span class="sched-time">8:00 AM</span>
-              <div class="sched-dot upcoming"></div>
-              <div class="sched-info">
-                <div class="sched-name">Pastor Amos — Live Devotional</div>
-                <div class="sched-type">Live broadcast · 30 min</div>
-              </div>
-              <span class="sched-badge type-live">Live</span>
-            </div>
-            <div class="schedule-item">
-              <span class="sched-time">9:00 AM</span>
-              <div class="sched-dot upcoming"></div>
-              <div class="sched-info">
-                <div class="sched-name">Member Shoutouts Block</div>
-                <div class="sched-type">Automated · AI reads approved messages</div>
-              </div>
-              <span class="sched-badge type-auto">Auto</span>
-            </div>
+          <div class="schedule-note">Minimum slot length is 15 minutes. Longer programmes use multiple slots and can be moved any time.</div>
+          <div class="schedule-tools">
+            <button class="shout-btn approve" onclick="addAnnouncement()">Add Announcement</button>
+            <button class="shout-btn" onclick="addSlot()">Add Open Slot</button>
           </div>
+          <div class="schedule-list" id="scheduleList"></div>
         </div>
 
         <!-- RIGHT COLUMN -->
@@ -548,12 +506,81 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 let liveInterval = null;
 let liveSeconds = 0;
 let listenerInterval = null;
+const SLOT_MINUTES = 15;
+let scheduleSlots = [
+  {title:'Early Morning Prayers', type:'auto', label:'Prayer', slots:3, note:'Uploaded sermon'},
+  {title:'Morning Bulletin', type:'news', label:'Bulletin', slots:1, note:'Local announcements'},
+  {title:'Morning Worship Set', type:'worship', label:'Worship', slots:5, note:'Now playing'},
+  {title:'Accra Weather Update', type:'weather', label:'Weather', slots:1, note:'Auto update'},
+  {title:'Pastor Amos - Live Devotional', type:'live', label:'Live', slots:2, note:'Live broadcast'},
+  {title:'Member Shoutouts Block', type:'announcement', label:'Shoutouts', slots:1, note:'Approved voice and text'}
+];
 
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function formatSlotTime(totalMinutes){
+  const hours24 = Math.floor(totalMinutes / 60) % 24;
+  const minutes = totalMinutes % 60;
+  const suffix = hours24 >= 12 ? 'PM' : 'AM';
+  const hours12 = hours24 % 12 || 12;
+  return hours12 + ':' + String(minutes).padStart(2,'0') + ' ' + suffix;
+}
+
+function renderSchedule(){
+  const list = document.getElementById('scheduleList');
+  if(!list) return;
+  let cursor = 5 * 60;
+  list.innerHTML = scheduleSlots.map((slot, index)=>{
+    const start = cursor;
+    const duration = slot.slots * SLOT_MINUTES;
+    cursor += duration;
+    const dot = index < 2 ? 'done' : index === 2 ? 'current' : 'upcoming';
+    return `
+      <div class="schedule-item">
+        <span class="sched-time">${formatSlotTime(start)}</span>
+        <div class="sched-dot ${dot}"></div>
+        <div class="sched-info">
+          <div class="sched-name">${slot.title}</div>
+          <div class="slot-meta">
+            <span class="slot-chip">${duration} min</span>
+            <span class="slot-chip">${slot.slots} slot${slot.slots > 1 ? 's' : ''}</span>
+            <span class="sched-type">${slot.note}</span>
+          </div>
+        </div>
+        <span class="sched-badge type-${slot.type}">${slot.label}</span>
+        <div class="slot-actions">
+          <button class="slot-btn" onclick="moveSlot(${index},-1)" title="Move earlier">↑</button>
+          <button class="slot-btn" onclick="moveSlot(${index},1)" title="Move later">↓</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function moveSlot(index, direction){
+  const next = index + direction;
+  if(next < 0 || next >= scheduleSlots.length) return;
+  const temp = scheduleSlots[index];
+  scheduleSlots[index] = scheduleSlots[next];
+  scheduleSlots[next] = temp;
+  renderSchedule();
+  showToast('Schedule slot moved');
+}
+
+function addAnnouncement(){
+  scheduleSlots.splice(3, 0, {title:'Church Announcement', type:'announcement', label:'Announce', slots:1, note:'15-minute minimum slot'});
+  renderSchedule();
+  showToast('Announcement slot added');
+}
+
+function addSlot(){
+  scheduleSlots.push({title:'Open Programme Slot', type:'auto', label:'Open', slots:1, note:'Ready for sermon, worship, live, or announcement'});
+  renderSchedule();
+  showToast('Open 15-minute slot added');
 }
 
 function getStationLink(){
@@ -651,6 +678,8 @@ listenerInterval = setInterval(()=>{
   count = Math.max(200, count + delta);
   document.getElementById('listenerCount').textContent = count;
 }, 4000);
+
+renderSchedule();
 </script>
 <!-- VOICES NAV -->
 <div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
