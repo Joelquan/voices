@@ -114,31 +114,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .badge-amber{background:var(--amber-light);color:var(--amber)}
 
 /* PROGRAM SCHEDULE */
-.schedule-list{display:flex;flex-direction:column;gap:0}
-.schedule-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
-.schedule-item:last-child{border-bottom:none}
-.sched-time{font-size:11px;color:var(--muted);width:52px;flex-shrink:0;font-variant-numeric:tabular-nums}
-.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.sched-dot.current{background:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
-.sched-dot.done{background:var(--border)}
-.sched-dot.upcoming{background:var(--border)}
-.sched-info{flex:1}
-.sched-name{font-size:13px;font-weight:500}
-.sched-type{font-size:11px;color:var(--muted);margin-top:1px}
-.sched-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
-.slot-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
-.slot-chip{font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 7px}
-.slot-actions{display:flex;align-items:center;gap:4px;margin-left:auto}
-.slot-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
-.slot-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-.schedule-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.schedule-grid{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.hour-row{display:grid;grid-template-columns:74px repeat(4,minmax(0,1fr));border-bottom:1px solid var(--border);min-height:64px}
+.hour-row:last-child{border-bottom:none}
+.hour-label{background:var(--bg);border-right:1px solid var(--border);padding:12px 10px;font-size:12px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.slot-cell{border-right:1px solid var(--border);padding:8px;cursor:pointer;min-width:0;transition:all 0.12s;background:#fff}
+.slot-cell:last-child{border-right:none}
+.slot-cell:hover{background:var(--accent-light)}
+.slot-time{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.slot-title{font-size:12px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-empty .slot-title{font-weight:500;color:var(--muted)}
+.slot-meta{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-filled{background:#f8fbff}
+.slot-worship{border-top:3px solid #2563eb}
+.slot-prayer{border-top:3px solid #16a34a}
+.slot-announcement{border-top:3px solid #b45309}
+.slot-live{border-top:3px solid var(--live)}
+.slot-sermon{border-top:3px solid #7c3aed}
+.slot-bulletin{border-top:3px solid #0f766e}
 .schedule-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:12px}
-.type-worship{background:#eff6ff;color:#1d4ed8}
-.type-news{background:#f0fdf4;color:#15803d}
-.type-auto{background:#fafaf9;color:#78716c;border:1px solid var(--border)}
-.type-live{background:var(--live-light);color:var(--live)}
-.type-weather{background:#f0fdfa;color:#0f766e}
-.type-announcement{background:#fef3c7;color:#92400e}
+.schedule-legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.legend-pill{font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 8px}
 
 /* SHOUTOUTS */
 .shoutout-list{display:flex;flex-direction:column;gap:8px}
@@ -352,23 +348,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         </div>
       </div>
 
+      <!-- PROGRAMME GRID -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">24-Hour Programme Grid</span>
+          <span class="card-action">4 slots per hour</span>
+        </div>
+        <div class="schedule-note">Every hour has four fixed 15-minute slots. Click any slot to add or update a programme.</div>
+        <div class="schedule-legend">
+          <span class="legend-pill">Minimum: 15 min</span>
+          <span class="legend-pill">Longer programmes fill nearby slots</span>
+          <span class="legend-pill">Announcements can be placed anywhere</span>
+        </div>
+        <div class="schedule-grid" id="scheduleGrid"></div>
+      </div>
+
       <!-- MAIN GRID -->
       <div class="grid-2">
-
-        <!-- PROGRAMME -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Today's 15-Minute Schedule</span>
-            <span class="card-action" onclick="addSlot()">Add Slot +</span>
-          </div>
-          <div class="schedule-note">Minimum slot length is 15 minutes. Longer programmes use multiple slots and can be moved any time.</div>
-          <div class="schedule-tools">
-            <button class="shout-btn approve" onclick="addAnnouncement()">Add Announcement</button>
-            <button class="shout-btn" onclick="addSlot()">Add Open Slot</button>
-          </div>
-          <div class="schedule-list" id="scheduleList"></div>
-        </div>
-
         <!-- RIGHT COLUMN -->
         <div style="display:flex;flex-direction:column;gap:16px">
 
@@ -434,8 +430,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div class="quick-actions">
             <button class="qa-btn" onclick="showToast('Programme builder ready for setup')">
               <div class="qa-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
-              <span class="qa-label">AI Schedule</span>
-              <span class="qa-sub">Auto-build today's lineup</span>
+              <span class="qa-label">Schedule Builder</span>
+              <span class="qa-sub">Build today's lineup</span>
             </button>
             <button class="qa-btn" onclick="showToast('Listener report prepared for today')">
               <div class="qa-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
@@ -507,14 +503,29 @@ let liveInterval = null;
 let liveSeconds = 0;
 let listenerInterval = null;
 const SLOT_MINUTES = 15;
-let scheduleSlots = [
-  {title:'Early Morning Prayers', type:'auto', label:'Prayer', slots:3, note:'Uploaded sermon'},
-  {title:'Morning Bulletin', type:'news', label:'Bulletin', slots:1, note:'Local announcements'},
-  {title:'Morning Worship Set', type:'worship', label:'Worship', slots:5, note:'Now playing'},
-  {title:'Accra Weather Update', type:'weather', label:'Weather', slots:1, note:'Auto update'},
-  {title:'Pastor Amos - Live Devotional', type:'live', label:'Live', slots:2, note:'Live broadcast'},
-  {title:'Member Shoutouts Block', type:'announcement', label:'Shoutouts', slots:1, note:'Approved voice and text'}
+const PROGRAM_PRESETS = [
+  {title:'Church Announcement', type:'announcement', note:'Announcement'},
+  {title:'Worship Set', type:'worship', note:'Music block'},
+  {title:'Prayer Moment', type:'prayer', note:'Prayer'},
+  {title:'Sermon Replay', type:'sermon', note:'Uploaded sermon'},
+  {title:'Live Pastor Segment', type:'live', note:'Live'},
+  {title:'Member Shoutouts', type:'announcement', note:'Approved shoutouts'}
 ];
+let scheduleSlots = {
+  20:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 1'},
+  21:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 2'},
+  22:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 3'},
+  24:{title:'Morning Bulletin', type:'bulletin', note:'15 min'},
+  26:{title:'Morning Worship Set', type:'worship', note:'75 min · part 1'},
+  27:{title:'Morning Worship Set', type:'worship', note:'75 min · part 2'},
+  28:{title:'Morning Worship Set', type:'worship', note:'75 min · part 3'},
+  29:{title:'Morning Worship Set', type:'worship', note:'75 min · part 4'},
+  30:{title:'Morning Worship Set', type:'worship', note:'75 min · part 5'},
+  31:{title:'Accra Weather Update', type:'bulletin', note:'15 min'},
+  32:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 1'},
+  33:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 2'},
+  36:{title:'Member Shoutouts', type:'announcement', note:'15 min'}
+};
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -532,55 +543,43 @@ function formatSlotTime(totalMinutes){
 }
 
 function renderSchedule(){
-  const list = document.getElementById('scheduleList');
-  if(!list) return;
-  let cursor = 5 * 60;
-  list.innerHTML = scheduleSlots.map((slot, index)=>{
-    const start = cursor;
-    const duration = slot.slots * SLOT_MINUTES;
-    cursor += duration;
-    const dot = index < 2 ? 'done' : index === 2 ? 'current' : 'upcoming';
-    return `
-      <div class="schedule-item">
-        <span class="sched-time">${formatSlotTime(start)}</span>
-        <div class="sched-dot ${dot}"></div>
-        <div class="sched-info">
-          <div class="sched-name">${slot.title}</div>
-          <div class="slot-meta">
-            <span class="slot-chip">${duration} min</span>
-            <span class="slot-chip">${slot.slots} slot${slot.slots > 1 ? 's' : ''}</span>
-            <span class="sched-type">${slot.note}</span>
-          </div>
-        </div>
-        <span class="sched-badge type-${slot.type}">${slot.label}</span>
-        <div class="slot-actions">
-          <button class="slot-btn" onclick="moveSlot(${index},-1)" title="Move earlier">↑</button>
-          <button class="slot-btn" onclick="moveSlot(${index},1)" title="Move later">↓</button>
-        </div>
-      </div>`;
-  }).join('');
+  const grid = document.getElementById('scheduleGrid');
+  if(!grid) return;
+  const rows = [];
+  for(let hour = 0; hour < 24; hour++){
+    const cells = [];
+    for(let quarter = 0; quarter < 4; quarter++){
+      const index = hour * 4 + quarter;
+      const slot = scheduleSlots[index];
+      const minutes = hour * 60 + quarter * SLOT_MINUTES;
+      cells.push(`
+        <div class="slot-cell ${slot ? 'slot-filled slot-' + slot.type : 'slot-empty'}" onclick="editSlot(${index})">
+          <div class="slot-time">${formatSlotTime(minutes)}</div>
+          <div class="slot-title">${slot ? slot.title : '+ Add program'}</div>
+          <div class="slot-meta">${slot ? slot.note : '15 min available'}</div>
+        </div>`);
+    }
+    rows.push(`
+      <div class="hour-row">
+        <div class="hour-label">${formatSlotTime(hour * 60).replace(':00','')}</div>
+        ${cells.join('')}
+      </div>`);
+  }
+  grid.innerHTML = rows.join('');
 }
 
-function moveSlot(index, direction){
-  const next = index + direction;
-  if(next < 0 || next >= scheduleSlots.length) return;
-  const temp = scheduleSlots[index];
-  scheduleSlots[index] = scheduleSlots[next];
-  scheduleSlots[next] = temp;
+function editSlot(index){
+  const existing = scheduleSlots[index];
+  if(existing){
+    const currentPreset = PROGRAM_PRESETS.findIndex(p=>p.title === existing.title);
+    const nextPreset = PROGRAM_PRESETS[(currentPreset + 1) % PROGRAM_PRESETS.length] || PROGRAM_PRESETS[0];
+    scheduleSlots[index] = {...nextPreset, note: nextPreset.note + ' · 15 min'};
+    showToast('Slot updated: ' + nextPreset.title);
+  } else {
+    scheduleSlots[index] = {...PROGRAM_PRESETS[0], note:'15 min'};
+    showToast('Programme added at ' + formatSlotTime(index * SLOT_MINUTES));
+  }
   renderSchedule();
-  showToast('Schedule slot moved');
-}
-
-function addAnnouncement(){
-  scheduleSlots.splice(3, 0, {title:'Church Announcement', type:'announcement', label:'Announce', slots:1, note:'15-minute minimum slot'});
-  renderSchedule();
-  showToast('Announcement slot added');
-}
-
-function addSlot(){
-  scheduleSlots.push({title:'Open Programme Slot', type:'auto', label:'Open', slots:1, note:'Ready for sermon, worship, live, or announcement'});
-  renderSchedule();
-  showToast('Open 15-minute slot added');
 }
 
 function getStationLink(){
