@@ -121,6 +121,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .slot-cell{border-right:1px solid var(--border);padding:8px;cursor:pointer;min-width:0;transition:all 0.12s;background:#fff}
 .slot-cell:last-child{border-right:none}
 .slot-cell:hover{background:var(--accent-light)}
+.slot-cell.selected{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-light)}
 .slot-time{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:4px}
 .slot-title{font-size:12px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .slot-empty .slot-title{font-weight:500;color:var(--muted)}
@@ -135,6 +136,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .schedule-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:12px}
 .schedule-legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .legend-pill{font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 8px}
+.scheduler-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.content-library{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:sticky;top:76px}
+.content-library-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.content-library-sub{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+.selected-slot-card{background:var(--accent-light);border:1px solid #dbe7ff;border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px}
+.selected-slot-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
+.selected-slot-time{font-size:13px;font-weight:600;color:var(--accent)}
+.content-list{display:flex;flex-direction:column;gap:8px;max-height:620px;overflow:auto;padding-right:2px}
+.content-item{border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;background:var(--bg)}
+.content-name{font-size:12px;font-weight:600;line-height:1.3;margin-bottom:4px}
+.content-meta{font-size:10px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.content-add{width:100%;border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:6px 8px;font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;font-family:inherit}
+.content-add:hover{border-color:var(--accent);background:#fff}
 
 /* SHOUTOUTS */
 .shoutout-list{display:flex;flex-direction:column;gap:8px}
@@ -202,6 +216,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .np-controls{width:100%}
   .progress-wrap{max-width:none}
   .grid-2,.grid-3{grid-template-columns:1fr;gap:12px;margin-bottom:16px}
+  .scheduler-layout{grid-template-columns:1fr}
+  .content-library{position:static}
   .quick-actions{grid-template-columns:1fr}
   .card,.stat-card{padding:16px}
   .weather-widget{align-items:flex-start}
@@ -360,7 +376,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <span class="legend-pill">Longer programmes fill nearby slots</span>
           <span class="legend-pill">Announcements can be placed anywhere</span>
         </div>
-        <div class="schedule-grid" id="scheduleGrid"></div>
+        <div class="scheduler-layout">
+          <div class="schedule-grid" id="scheduleGrid"></div>
+          <aside class="content-library">
+            <div class="content-library-title">Content Directory</div>
+            <div class="content-library-sub">Select a slot, then add content. Longer content automatically fills the next 15-minute slots.</div>
+            <div class="selected-slot-card">
+              <div class="selected-slot-label">Selected slot</div>
+              <div class="selected-slot-time" id="selectedSlotTime">Click a slot</div>
+            </div>
+            <div class="content-list" id="contentList"></div>
+          </aside>
+        </div>
       </div>
 
       <!-- MAIN GRID -->
@@ -503,28 +530,30 @@ let liveInterval = null;
 let liveSeconds = 0;
 let listenerInterval = null;
 const SLOT_MINUTES = 15;
-const PROGRAM_PRESETS = [
-  {title:'Church Announcement', type:'announcement', note:'Announcement'},
-  {title:'Worship Set', type:'worship', note:'Music block'},
-  {title:'Prayer Moment', type:'prayer', note:'Prayer'},
-  {title:'Sermon Replay', type:'sermon', note:'Uploaded sermon'},
-  {title:'Live Pastor Segment', type:'live', note:'Live'},
-  {title:'Member Shoutouts', type:'announcement', note:'Approved shoutouts'}
+const CONTENT_LIBRARY = [
+  {title:'Early Morning Prayers', type:'prayer', duration:45, source:'Uploaded prayer audio'},
+  {title:'Morning Worship Set', type:'worship', duration:75, source:'Worship playlist'},
+  {title:'Sunday Sermon Replay', type:'sermon', duration:60, source:'June 1 sermon upload'},
+  {title:'Church Announcements', type:'announcement', duration:15, source:'Text bulletin'},
+  {title:'Pastor Amos - Live Devotional', type:'live', duration:30, source:'Live source'},
+  {title:'Member Shoutouts', type:'announcement', duration:15, source:'Approved queue'},
+  {title:'Weather and Local Bulletin', type:'bulletin', duration:15, source:'Local bulletin'}
 ];
+let selectedSlotIndex = null;
 let scheduleSlots = {
-  20:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 1'},
-  21:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 2'},
-  22:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 3'},
-  24:{title:'Morning Bulletin', type:'bulletin', note:'15 min'},
-  26:{title:'Morning Worship Set', type:'worship', note:'75 min · part 1'},
-  27:{title:'Morning Worship Set', type:'worship', note:'75 min · part 2'},
-  28:{title:'Morning Worship Set', type:'worship', note:'75 min · part 3'},
-  29:{title:'Morning Worship Set', type:'worship', note:'75 min · part 4'},
-  30:{title:'Morning Worship Set', type:'worship', note:'75 min · part 5'},
-  31:{title:'Accra Weather Update', type:'bulletin', note:'15 min'},
-  32:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 1'},
-  33:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 2'},
-  36:{title:'Member Shoutouts', type:'announcement', note:'15 min'}
+  20:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 1', source:'Uploaded prayer audio'},
+  21:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 2', source:'Uploaded prayer audio'},
+  22:{title:'Early Morning Prayers', type:'prayer', note:'45 min · part 3', source:'Uploaded prayer audio'},
+  24:{title:'Morning Bulletin', type:'bulletin', note:'15 min', source:'Local bulletin'},
+  26:{title:'Morning Worship Set', type:'worship', note:'75 min · part 1', source:'Worship playlist'},
+  27:{title:'Morning Worship Set', type:'worship', note:'75 min · part 2', source:'Worship playlist'},
+  28:{title:'Morning Worship Set', type:'worship', note:'75 min · part 3', source:'Worship playlist'},
+  29:{title:'Morning Worship Set', type:'worship', note:'75 min · part 4', source:'Worship playlist'},
+  30:{title:'Morning Worship Set', type:'worship', note:'75 min · part 5', source:'Worship playlist'},
+  31:{title:'Accra Weather Update', type:'bulletin', note:'15 min', source:'Local bulletin'},
+  32:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 1', source:'Live source'},
+  33:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 2', source:'Live source'},
+  36:{title:'Member Shoutouts', type:'announcement', note:'15 min', source:'Approved queue'}
 };
 
 function showToast(msg){
@@ -552,8 +581,9 @@ function renderSchedule(){
       const index = hour * 4 + quarter;
       const slot = scheduleSlots[index];
       const minutes = hour * 60 + quarter * SLOT_MINUTES;
+      const selectedClass = selectedSlotIndex === index ? ' selected' : '';
       cells.push(`
-        <div class="slot-cell ${slot ? 'slot-filled slot-' + slot.type : 'slot-empty'}" onclick="editSlot(${index})">
+        <div class="slot-cell ${slot ? 'slot-filled slot-' + slot.type : 'slot-empty'}${selectedClass}" onclick="selectSlot(${index})">
           <div class="slot-time">${formatSlotTime(minutes)}</div>
           <div class="slot-title">${slot ? slot.title : '+ Add program'}</div>
           <div class="slot-meta">${slot ? slot.note : '15 min available'}</div>
@@ -568,18 +598,66 @@ function renderSchedule(){
   grid.innerHTML = rows.join('');
 }
 
-function editSlot(index){
-  const existing = scheduleSlots[index];
-  if(existing){
-    const currentPreset = PROGRAM_PRESETS.findIndex(p=>p.title === existing.title);
-    const nextPreset = PROGRAM_PRESETS[(currentPreset + 1) % PROGRAM_PRESETS.length] || PROGRAM_PRESETS[0];
-    scheduleSlots[index] = {...nextPreset, note: nextPreset.note + ' · 15 min'};
-    showToast('Slot updated: ' + nextPreset.title);
-  } else {
-    scheduleSlots[index] = {...PROGRAM_PRESETS[0], note:'15 min'};
-    showToast('Programme added at ' + formatSlotTime(index * SLOT_MINUTES));
+function renderContentLibrary(){
+  const list = document.getElementById('contentList');
+  if(!list) return;
+  list.innerHTML = CONTENT_LIBRARY.map((item, index)=>`
+    <div class="content-item">
+      <div class="content-name">${item.title}</div>
+      <div class="content-meta">
+        <span>${item.duration} min</span>
+        <span>${item.source}</span>
+      </div>
+      <button class="content-add" onclick="addContentToSelected(${index})">Add to selected slot</button>
+    </div>
+  `).join('');
+}
+
+function selectSlot(index){
+  selectedSlotIndex = index;
+  const label = document.getElementById('selectedSlotTime');
+  if(label) label.textContent = formatSlotTime(index * SLOT_MINUTES);
+  renderSchedule();
+  showToast('Selected ' + formatSlotTime(index * SLOT_MINUTES));
+}
+
+function clearProgrammeBlock(index){
+  const current = scheduleSlots[index];
+  if(!current) return;
+  let start = index;
+  let end = index;
+  while(start > 0 && scheduleSlots[start - 1]?.title === current.title && scheduleSlots[start - 1]?.type === current.type){
+    start--;
+  }
+  while(end < 95 && scheduleSlots[end + 1]?.title === current.title && scheduleSlots[end + 1]?.type === current.type){
+    end++;
+  }
+  for(let slotIndex = start; slotIndex <= end; slotIndex++){
+    delete scheduleSlots[slotIndex];
+  }
+}
+
+function addContentToSelected(contentIndex){
+  if(selectedSlotIndex === null){
+    showToast('Select a slot first');
+    return;
+  }
+  const content = CONTENT_LIBRARY[contentIndex];
+  const neededSlots = Math.ceil(content.duration / SLOT_MINUTES);
+  const availableSlots = Math.min(neededSlots, 96 - selectedSlotIndex);
+  clearProgrammeBlock(selectedSlotIndex);
+  for(let offset = 0; offset < availableSlots; offset++){
+    const index = selectedSlotIndex + offset;
+    scheduleSlots[index] = {
+      title: content.title,
+      type: content.type,
+      note: content.duration + ' min' + (neededSlots > 1 ? ' · part ' + (offset + 1) : ''),
+      source: content.source
+    };
   }
   renderSchedule();
+  const ending = availableSlots < neededSlots ? ' until the day ends' : ' across ' + availableSlots + ' slot' + (availableSlots === 1 ? '' : 's');
+  showToast(content.title + ' added ' + ending);
 }
 
 function getStationLink(){
@@ -679,6 +757,7 @@ listenerInterval = setInterval(()=>{
 }, 4000);
 
 renderSchedule();
+renderContentLibrary();
 </script>
 <!-- VOICES NAV -->
 <div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
