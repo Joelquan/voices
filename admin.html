@@ -689,5 +689,13 @@ setInterval(()=>{
   const el = document.getElementById('liveCount');
   if(el) el.textContent = 6 + (Math.random() > 0.7 ? 1 : 0);
 }, 5000);
-</script></body>
+</script>
+<!-- VOICES NAV -->
+<div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+  <a href="index.html" style="background:#c9933a;color:#1a0f00;font-family:sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;text-decoration:none;letter-spacing:0.3px">🎙 Directory</a>
+  <a href="listen.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">📻 Listen</a>
+  <a href="dashboard.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⚙️ Dashboard</a>
+  <a href="admin.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">🔐 Admin</a>
+</div>
+</body>
 </html>
