@@ -141,6 +141,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .schedule-note{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:12px}
 .schedule-legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .legend-pill{font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 8px}
+.schedule-tabs{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;margin-bottom:12px;width:max-content;max-width:100%}
+.schedule-tab{border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.schedule-tab:hover{color:var(--text);background:#fff}
+.schedule-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px rgba(26,24,22,0.08)}
+.schedule-tab.has-current{box-shadow:inset 0 0 0 1px #7dd3fc}
 .scheduler-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 .content-library{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:sticky;top:76px}
 .content-library-title{font-size:13px;font-weight:600;margin-bottom:4px}
@@ -392,6 +397,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <span class="legend-pill">Longer programmes fill nearby slots</span>
           <span class="legend-pill">Announcements can be placed anywhere</span>
         </div>
+        <div class="schedule-tabs" aria-label="Schedule time range">
+          <button class="schedule-tab" id="scheduleTabAm" onclick="switchSchedulePeriod('am')">12 AM - 11 AM</button>
+          <button class="schedule-tab" id="scheduleTabPm" onclick="switchSchedulePeriod('pm')">12 Noon - 11 PM</button>
+        </div>
         <div class="scheduler-layout">
           <div class="schedule-grid" id="scheduleGrid"></div>
           <aside class="content-library">
@@ -581,6 +590,7 @@ let listenerInterval = null;
 let nowPlayingInterval = null;
 let isLiveMode = false;
 const SLOT_MINUTES = 15;
+let activeSchedulePeriod = new Date().getHours() < 12 ? 'am' : 'pm';
 let CONTENT_LIBRARY = [
   {title:'Early Morning Prayers', type:'prayer', duration:45, source:'Uploaded prayer audio', uploaded:true},
   {title:'Morning Worship Set', type:'worship', duration:75, source:'Worship playlist', uploaded:true},
@@ -624,6 +634,26 @@ function formatSlotTime(totalMinutes){
 
 function getCurrentSlotIndex(date = new Date()){
   return Math.floor((date.getHours() * 60 + date.getMinutes()) / SLOT_MINUTES);
+}
+
+function getSchedulePeriodForSlot(index){
+  return index < 48 ? 'am' : 'pm';
+}
+
+function switchSchedulePeriod(period){
+  activeSchedulePeriod = period;
+  renderSchedule();
+}
+
+function renderScheduleTabs(){
+  const currentPeriod = getSchedulePeriodForSlot(getCurrentSlotIndex());
+  const amTab = document.getElementById('scheduleTabAm');
+  const pmTab = document.getElementById('scheduleTabPm');
+  if(!amTab || !pmTab) return;
+  amTab.classList.toggle('active', activeSchedulePeriod === 'am');
+  pmTab.classList.toggle('active', activeSchedulePeriod === 'pm');
+  amTab.classList.toggle('has-current', currentPeriod === 'am');
+  pmTab.classList.toggle('has-current', currentPeriod === 'pm');
 }
 
 function getProgrammeBlock(index){
@@ -699,7 +729,10 @@ function renderSchedule(){
   if(!grid) return;
   const rows = [];
   const currentIndex = getCurrentSlotIndex();
-  for(let hour = 0; hour < 24; hour++){
+  const startHour = activeSchedulePeriod === 'am' ? 0 : 12;
+  const endHour = activeSchedulePeriod === 'am' ? 11 : 23;
+  renderScheduleTabs();
+  for(let hour = startHour; hour <= endHour; hour++){
     const cells = [];
     for(let quarter = 0; quarter < 4; quarter++){
       const index = hour * 4 + quarter;
