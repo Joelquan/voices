@@ -8,8 +8,12 @@
 
 ## Goal
 
-Give a church a **24/7 radio station** members can open from anywhere.  
-v1 = **one station**, one link, something members can **hear today**.
+Give a church a **24/7 radio station** members can open from anywhere — eventually **staffed by AI agents** (DJ, programmer, librarian, news, weather, music, manager).
+
+v1 = **one station**, one link, something members can **hear today** (TTS host).  
+North star = church library + enrichment, mixed and hosted by agents.
+
+**Product law:** [docs/AGENTS.md](./docs/AGENTS.md) · **Content map:** [docs/CONTENT.md](./docs/CONTENT.md)
 
 ## What ships in v1
 
