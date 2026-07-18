@@ -13,9 +13,9 @@ const {
 
 // ── Church week notes (v1: edit here; later from dashboard) ───────
 const WEEKLY_ANNOUNCEMENTS = [
-  'Choir practice is Thursday at 6 PM in the main hall. All voices welcome.',
-  'Youth fellowship meets Saturday morning at 10. Bring a friend.',
-  'Remember our special prayer for families this Sunday after the first service.',
+  'Join us this Sunday at The Church in Tema — come early and bring someone from your street.',
+  'Midweek prayer continues in Tema. Check with your fellowship leader for the meeting point and time.',
+  'If you are new in Tema or visiting the harbour city, you are welcome here. Stay after service and greet the family.',
 ];
 
 const BIBLE_SNIPPETS = [

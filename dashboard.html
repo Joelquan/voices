@@ -268,8 +268,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
 
     <div class="station-card">
-      <div class="station-name">Grace Community Church</div>
-      <div class="station-sub">Accra, Ghana · Test station</div>
+      <div class="station-name">The Church in Tema</div>
+      <div class="station-sub">Tema, Ghana · Pilot station</div>
       <div class="station-status">
         <div class="status-dot" id="stationDot"></div>
         <span class="status-label" id="stationStatus">On Air</span>
@@ -486,7 +486,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
             <div class="weather-icon">⛅</div>
             <div>
               <div class="weather-temp">29°C</div>
-              <div class="weather-city">Accra, Ghana</div>
+              <div class="weather-city">Tema, Ghana</div>
               <div class="weather-desc">Partly cloudy · Humidity 74%</div>
             </div>
             <div style="margin-left:auto;text-align:right">
@@ -611,7 +611,7 @@ let scheduleSlots = {
   28:{title:'Morning Worship Set', type:'worship', note:'75 min · part 3', source:'Worship playlist'},
   29:{title:'Morning Worship Set', type:'worship', note:'75 min · part 4', source:'Worship playlist'},
   30:{title:'Morning Worship Set', type:'worship', note:'75 min · part 5', source:'Worship playlist'},
-  31:{title:'Accra Weather Update', type:'bulletin', note:'15 min', source:'Local bulletin'},
+  31:{title:'Tema Weather Update', type:'bulletin', note:'15 min', source:'Local bulletin'},
   32:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 1', source:'Live source'},
   33:{title:'Pastor Amos - Live Devotional', type:'live', note:'30 min · part 2', source:'Live source'},
   36:{title:'Member Shoutouts', type:'announcement', note:'15 min', source:'Approved queue'}
@@ -932,7 +932,7 @@ async function copyText(value){
 }
 
 function shareStation(){
-  const station = {name:'Grace Community Church', location:'Accra, Ghana', programme:'Morning Worship Set - Hillsong Collection', listeners:String(count || 247)};
+  const station = {name:'The Church in Tema', location:'Tema, Ghana', programme:'Morning Worship', listeners:String(count || 12)};
   localStorage.setItem('voices-current-station', JSON.stringify(station));
   copyText(getStationLink()).then(ok=>{
     showToast(ok ? 'Listener link copied for church test' : 'Listener link: ' + getStationLink());

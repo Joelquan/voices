@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Grace Community Church · Live</title>
+<title>The Church in Tema · Live</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -242,8 +242,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <div class="station-art-content">
         <div class="station-cross"><svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg></div>
         <div class="station-text">
-          <div class="station-name">Grace Community Church</div>
-          <div class="station-location">Accra, Ghana</div>
+          <div class="station-name">The Church in Tema</div>
+          <div class="station-location">Tema, Ghana</div>
         </div>
         <div class="eq-bars" id="eqBars" style="margin:0">
           <div class="eq-bar" style="height:6px"></div>
@@ -430,7 +430,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <div class="prog-item">
         <span class="prog-time">7:45 AM</span>
         <div class="prog-dot upcoming"></div>
-        <div class="prog-info"><div class="prog-name">Accra Weather Update</div><div class="prog-type">Weather API</div></div>
+        <div class="prog-info"><div class="prog-name">Tema Weather Update</div><div class="prog-type">Weather API</div></div>
         <span class="prog-badge pb-weather">Weather</span>
       </div>
       <div class="prog-item">
@@ -535,11 +535,11 @@ let segmentIndex = 0;
 let speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 let preferredVoice = null;
 let currentStation = {
-  name: 'Grace Community Church',
-  location: 'Accra, Ghana',
+  name: 'The Church in Tema',
+  location: 'Tema, Ghana',
   programme: 'Morning Worship',
   listeners: '12',
-  tagline: '24/7 church radio for our family'
+  tagline: '24/7 radio for our church family in Tema'
 };
 
 function getStationLink(){

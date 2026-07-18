@@ -4,12 +4,12 @@
  */
 
 const STATION = {
-  name: 'Grace Community Church',
-  location: 'Accra, Ghana',
-  tagline: '24/7 church radio for our family',
+  name: 'The Church in Tema',
+  location: 'Tema, Ghana',
+  tagline: '24/7 radio for our church family in Tema',
   listeners: 12,
   // Share / brand
-  shortCode: 'grace',
+  shortCode: 'tema',
 };
 
 const programSlots = [

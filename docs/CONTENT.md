@@ -86,7 +86,7 @@ If church has **sermon only**:
 
 ## First-customer content checklist
 
-- [ ] Church name, city, timezone  
+- [x] Church name, city — **The Church in Tema · Tema, Ghana**
 - [ ] 1 welcome / pastor note (even TTS script)  
 - [ ] 1 sermon (file or script)  
 - [ ] 3 weekly announcements (text OK)  

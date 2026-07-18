@@ -117,8 +117,8 @@ Every hour on air is a **rundown**: ordered segments the player (and later strea
 
 ```json
 {
-  "stationId": "grace",
-  "churchName": "Grace Community Church",
+  "stationId": "tema",
+  "churchName": "The Church in Tema",
   "timezone": "Africa/Accra",
   "hourStart": "2026-07-18T18:00:00+00:00",
   "theme": "evening-rest",
@@ -130,7 +130,7 @@ Every hour on air is a **rundown**: ordered segments the player (and later strea
       "durationSec": 12,
       "source": "system",
       "agent": "dj",
-      "speakText": "You’re listening to Grace Community Church on Voices.",
+      "speakText": "You’re listening to The Church in Tema on Voices.",
       "audioUrl": null
     },
     {
@@ -139,7 +139,7 @@ Every hour on air is a **rundown**: ordered segments the player (and later strea
       "durationSec": 25,
       "source": "platform",
       "agent": "weather",
-      "speakText": "This evening in Accra: warm, light breeze, about 28 degrees.",
+      "speakText": "This evening in Tema: warm, light breeze, about 28 degrees.",
       "audioUrl": null
     },
     {

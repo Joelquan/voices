@@ -352,7 +352,7 @@ button{font-family:inherit;cursor:pointer}
     <div class="prog-item">
       <span class="prog-time">7:45 AM</span>
       <div class="prog-dot soon"></div>
-      <div class="prog-info"><div class="prog-name">Accra Weather Update</div><div class="prog-type">Weather API</div><span class="prog-tag tag-weather">Weather</span></div>
+      <div class="prog-info"><div class="prog-name">Tema Weather Update</div><div class="prog-type">Weather API</div><span class="prog-tag tag-weather">Weather</span></div>
     </div>
     <div class="prog-item">
       <span class="prog-time">8:00 AM</span>
@@ -424,7 +424,7 @@ button{font-family:inherit;cursor:pointer}
     <div class="hero-strip">
       <div class="hero-text">
         <div class="hero-title">Your church is <em>on the air.</em></div>
-        <div class="hero-sub" id="heroSub">24/7 radio for Grace Community Church. Share one link — members listen from anywhere.</div>
+        <div class="hero-sub" id="heroSub">24/7 radio for The Church in Tema. Share one link — members listen from anywhere.</div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
           <button class="tb-btn tb-btn-primary" style="padding:12px 18px;font-size:14px" onclick="location.href='/listen'">▶ Listen live</button>
           <button class="tb-btn" style="padding:12px 18px;font-size:14px" onclick="copyMemberLink()">Copy member link</button>
@@ -478,8 +478,8 @@ button{font-family:inherit;cursor:pointer}
           <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
         </div>
         <div class="feat-info">
-          <div class="feat-name" id="featName">Grace Community Church</div>
-          <div class="feat-loc" id="featLoc">Accra, Ghana</div>
+          <div class="feat-name" id="featName">The Church in Tema</div>
+          <div class="feat-loc" id="featLoc">Tema, Ghana</div>
           <div class="feat-prog"><div class="feat-prog-dot"></div><span id="featProg">Loading programme…</span></div>
           <div class="feat-tune">Listen live →</div>
         </div>
@@ -493,7 +493,7 @@ button{font-family:inherit;cursor:pointer}
     </div>
     <div class="stations-grid" id="stationsGrid">
 
-      <div class="station-card" onclick="tuneIn('Grace Community Church','Morning Worship Set')">
+      <div class="station-card" onclick="tuneIn('The Church in Tema','Morning Worship')">
         <div class="card-art" style="background:linear-gradient(135deg,#dcfce7,#86efac)">
           <div class="card-art-bg"></div>
           <div class="card-live-badge"><div class="ldot"></div>Live</div>
@@ -501,13 +501,13 @@ button{font-family:inherit;cursor:pointer}
           <div class="card-art-overlay"><button class="card-tune-btn">Tune In</button></div>
         </div>
         <div class="card-body">
-          <div class="card-name">Grace Community Church</div>
-          <div class="card-location">Accra, Ghana</div>
-          <div class="card-now"><div class="card-now-dot"></div>Morning Worship Set</div>
+          <div class="card-name">The Church in Tema</div>
+          <div class="card-location">Tema, Ghana</div>
+          <div class="card-now"><div class="card-now-dot"></div>Morning Worship</div>
         </div>
         <div class="card-footer">
-          <span class="card-cat">Pentecostal</span>
-          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>247</span>
+          <span class="card-cat">Pilot</span>
+          <span class="card-listeners"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>12</span>
         </div>
       </div>
 
@@ -658,7 +658,7 @@ button{font-family:inherit;cursor:pointer}
 let drawerOpen = true;
 let mpPlaying = false;
 const STATION_DATA = {
-  'Grace Community Church': {location:'Accra, Ghana', programme:'Morning Worship Set', listeners:'247'},
+  'The Church in Tema': {location:'Tema, Ghana', programme:'Morning Worship Set', listeners:'12'},
   'Redeemed Gospel Church': {location:'Lagos, Nigeria', programme:'Live - Pastor Emeka', listeners:'1,204'},
   'Calvary Baptist Church': {location:'Nairobi, Kenya', programme:'Sunday Sermon Replay', listeners:'89'},
   'Victory Praise Centre': {location:'Kumasi, Ghana', programme:'Afternoon Worship Mix', listeners:'312'},
@@ -713,7 +713,7 @@ function tuneIn(station, prog){
   const data = STATION_DATA[station] || {};
   const payload = {
     name: station,
-    location: data.location || 'Accra, Ghana',
+    location: data.location || 'Tema, Ghana',
     programme: prog || data.programme || 'Live station',
     listeners: data.listeners || '247'
   };
