@@ -412,32 +412,37 @@ button{font-family:inherit;cursor:pointer}
       <input class="search-input" type="text" placeholder="Search churches, cities, countries..." oninput="onSearch(this.value)">
     </div>
     <div class="topbar-right">
-      <button class="tb-btn" onclick="location.href='dashboard.html'">Church dashboard</button>
-      <button class="tb-btn tb-btn-primary" onclick="location.href='admin.html'">Add your church</button>
+      <button class="tb-btn" onclick="copyMemberLink()">Copy share link</button>
+      <button class="tb-btn tb-btn-primary" onclick="location.href='/listen'">Listen live</button>
     </div>
   </div>
 
   <!-- CONTENT -->
   <div class="content">
 
-    <!-- HERO -->
+    <!-- HERO — first-customer single station launch -->
     <div class="hero-strip">
       <div class="hero-text">
-        <div class="hero-title">Every church has a <em>voice.</em><br>Now the world can hear it.</div>
-        <div class="hero-sub">24/7 radio stations for churches everywhere. Tune in from anywhere.</div>
+        <div class="hero-title">Your church is <em>on the air.</em></div>
+        <div class="hero-sub" id="heroSub">24/7 radio for Grace Community Church. Share one link — members listen from anywhere.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
+          <button class="tb-btn tb-btn-primary" style="padding:12px 18px;font-size:14px" onclick="location.href='/listen'">▶ Listen live</button>
+          <button class="tb-btn" style="padding:12px 18px;font-size:14px" onclick="copyMemberLink()">Copy member link</button>
+        </div>
+        <div id="shareHint" style="margin-top:10px;font-size:12px;color:var(--muted)">Member link loads after page opens…</div>
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
-          <div class="hero-stat-num" id="statStations">248</div>
-          <div class="hero-stat-label">Stations</div>
+          <div class="hero-stat-num" id="statStations">1</div>
+          <div class="hero-stat-label">Live station</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-num" id="statLive">24</div>
-          <div class="hero-stat-label">Live Now</div>
+          <div class="hero-stat-num" id="statLive">On</div>
+          <div class="hero-stat-label">Air now</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-num">38</div>
-          <div class="hero-stat-label">Countries</div>
+          <div class="hero-stat-num" id="statMode">Voice</div>
+          <div class="hero-stat-label">Playback</div>
         </div>
       </div>
     </div>
@@ -462,40 +467,29 @@ button{font-family:inherit;cursor:pointer}
       <button class="cat-tab" onclick="setCategory(this,'News')">News & World</button>
     </div>
 
-    <!-- FEATURED -->
+    <!-- FEATURED — pilot station -->
     <div class="section-header">
-      <div class="section-title">Featured Stations</div>
-      <div class="section-link">See all →</div>
+      <div class="section-title">Our station</div>
+      <div class="section-link" onclick="location.href='/listen'" style="cursor:pointer">Open player →</div>
     </div>
     <div class="featured-row" id="featuredRow">
-      <div class="featured-card" onclick="tuneIn('Grace Community Church','Morning Worship Set')">
+      <div class="featured-card" onclick="location.href='/listen'">
         <div class="featured-art" style="background:linear-gradient(135deg,#dcfce7,#86efac)">
           <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
         </div>
         <div class="feat-info">
-          <div class="feat-name">Grace Community Church</div>
-          <div class="feat-loc">Accra, Ghana</div>
-          <div class="feat-prog"><div class="feat-prog-dot"></div>Morning Worship Set</div>
-          <div class="feat-tune">Tune in →</div>
-        </div>
-      </div>
-      <div class="featured-card" onclick="tuneIn('Redeemed Gospel Church','Live — Pastor Emeka')">
-        <div class="featured-art" style="background:linear-gradient(135deg,#bbf7d0,#4ade80)">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="8" x2="22" y2="8"/></svg>
-        </div>
-        <div class="feat-info">
-          <div class="feat-name">Redeemed Gospel Church</div>
-          <div class="feat-loc">Lagos, Nigeria</div>
-          <div class="feat-prog"><div class="feat-prog-dot" style="background:var(--live)"></div>Live — Pastor Emeka</div>
-          <div class="feat-tune">Tune in →</div>
+          <div class="feat-name" id="featName">Grace Community Church</div>
+          <div class="feat-loc" id="featLoc">Accra, Ghana</div>
+          <div class="feat-prog"><div class="feat-prog-dot"></div><span id="featProg">Loading programme…</span></div>
+          <div class="feat-tune">Listen live →</div>
         </div>
       </div>
     </div>
 
-    <!-- ALL STATIONS -->
+    <!-- MORE STATIONS (demo grid kept for future multi-church) -->
     <div class="section-header">
-      <div class="section-title" id="gridTitle">All Stations</div>
-      <div class="section-link">248 stations</div>
+      <div class="section-title" id="gridTitle">Coming soon — more churches</div>
+      <div class="section-link">Pilot · 1 live</div>
     </div>
     <div class="stations-grid" id="stationsGrid">
 
@@ -733,7 +727,7 @@ function tuneIn(station, prog){
   mpPlaying = true;
   document.getElementById('mpIcon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
   showToast('Opening ' + station);
-  setTimeout(()=>{ location.href = 'listen.html'; }, 450);
+  setTimeout(()=>{ location.href = '/listen'; }, 450);
 }
 
 function toggleMpPlay(){
@@ -766,6 +760,53 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'), 2500);
 }
 
+function memberLink(){
+  return window.location.origin + '/listen';
+}
+
+async function copyMemberLink(){
+  const link = memberLink();
+  try {
+    await navigator.clipboard.writeText(link);
+    showToast('Member link copied — send on WhatsApp');
+  } catch(e) {
+    showToast(link);
+  }
+  const hint = document.getElementById('shareHint');
+  if(hint) hint.textContent = 'Share: ' + link.replace(/^https?:\/\//, '');
+}
+
+async function hydrateLaunchStation(){
+  const hint = document.getElementById('shareHint');
+  if(hint) hint.textContent = 'Share: ' + memberLink().replace(/^https?:\/\//, '');
+  try {
+    const res = await fetch('/api/station/config');
+    if(!res.ok) return;
+    const data = await res.json();
+    const s = data.station || {};
+    const now = data.now || {};
+    if(s.name){
+      const hero = document.getElementById('heroSub');
+      if(hero) hero.textContent = (s.tagline || '24/7 church radio') + ' · ' + (s.location || '');
+      const featName = document.getElementById('featName');
+      const featLoc = document.getElementById('featLoc');
+      const featProg = document.getElementById('featProg');
+      if(featName) featName.textContent = s.name;
+      if(featLoc) featLoc.textContent = s.location || '';
+      if(featProg) featProg.textContent = now.title || now.name || 'On air now';
+      document.title = 'Voices — ' + s.name;
+      localStorage.setItem('voices-current-station', JSON.stringify({
+        name: s.name,
+        location: s.location,
+        programme: now.title || now.name || 'Live',
+        listeners: String(s.listeners || 12)
+      }));
+    }
+  } catch(e) {
+    console.warn('Station config unavailable', e);
+  }
+}
+
 // Isolate drawer scroll from main
 document.addEventListener('DOMContentLoaded', function(){
   const drawerScroll = document.querySelector('.drawer-scroll');
@@ -773,6 +814,7 @@ document.addEventListener('DOMContentLoaded', function(){
     drawerScroll.addEventListener('wheel', function(e){ e.stopPropagation(); }, {passive:true});
     drawerScroll.addEventListener('touchmove', function(e){ e.stopPropagation(); }, {passive:true});
   }
+  hydrateLaunchStation();
 });
 
 function toggleRegion(id){

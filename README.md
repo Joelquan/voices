@@ -1,58 +1,93 @@
 # Voices — Church Radio
 
-Prototype platform for church community radio: directory, live listen player, church dashboard, platform admin, and a fixed 24-hour programme grid.
+**First-customer launch:** one live church station + shareable listen link + browser voice (TTS) playback.
 
-**Live:** https://voices-pi.vercel.app
+**Live:** https://voices-pi.vercel.app  
+**Member link:** https://voices-pi.vercel.app/listen  
+**GitHub:** https://github.com/Joelquan/voices
 
-## Pages
+## Goal
 
-| Route | File | Purpose |
-|-------|------|---------|
-| `/` | `index.html` | Station directory + mini player |
-| `/listen` | `listen.html` | Full player, now-playing, day programme |
-| `/dashboard` | `dashboard.html` | Church admin: schedule, uploads, library |
-| `/admin` | `admin.html` | Platform owner: churches, signups, uploads |
-| `/plan` | `plan.html` | 7-day launch checklist |
+Give a church a **24/7 radio station** members can open from anywhere.  
+v1 = **one station**, one link, something members can **hear today**.
 
-## API (Vercel serverless)
+## What ships in v1
 
-| Endpoint | Role |
-|----------|------|
-| `GET /api/station/now` | Current slot, sample content, progress % |
-| `GET /api/program/today` | Full day grid + current slot id |
+| Piece | Status |
+|-------|--------|
+| `/listen` player | Live — Web Speech (free TTS) reads the current hour’s programme |
+| 24-hour programme grid | Live — `api/_program.js` |
+| Share link (WhatsApp / copy) | Live — `origin/listen` |
+| Home = pilot station | Live — single-station launch CTA |
+| Real MP3 / stream | Next |
+| Multi-church directory | Later |
+| Auth / billing | Later |
 
-Shared schedule lives in `api/_program.js` (8 fixed blocks from Night Watch through Evening Devotional). Sample station: **Grace Community Church · Accra, Ghana**.
+## Customize the first church
 
-## Stack
+Edit **`api/_program.js`** → `STATION` object:
 
-- Static HTML / CSS / vanilla JS (no build step)
-- Vercel routes + Node serverless handlers
-- `localStorage` for selected station between index → listen
-- Deployed as Vercel project `voices`
-
-## Local
-
-```bash
-# Option A: any static server from project root
-npx serve .
-
-# Option B: Vercel (API routes work)
-npx vercel dev
+```js
+const STATION = {
+  name: 'Your Church Name',
+  location: 'City, Country',
+  tagline: '24/7 church radio for our family',
+  listeners: 12,
+  shortCode: 'yourchurch',
+};
 ```
 
-Open `/`, pick a station, or go straight to `/listen`.
+Update each slot’s `sample.text` — that text is what members **hear** when they tap play.
 
-## Deploy
-
-Linked to Vercel project `voices` (production alias `voices-pi.vercel.app`).
+Redeploy after changes:
 
 ```bash
 npx vercel --prod
 ```
 
-## Status
+## Pages
 
-Working prototype. Admin/dashboard upload & scheduling UI is largely client-side mock; programme API returns structured sample content with `audioUrl: null` until real media is wired.
+| Route | Purpose |
+|-------|---------|
+| `/` | Launch home — one station + share |
+| `/listen` | Member player (send this link) |
+| `/dashboard` | Church schedule UI (prototype) |
+| `/admin` | Platform admin (prototype) |
+| `/plan` | 7-day launch checklist |
+
+## API
+
+| Endpoint | Role |
+|----------|------|
+| `GET /api/station/now` | Now playing + `speakText` for TTS |
+| `GET /api/program/today` | Full day grid |
+| `GET /api/station/config` | Public station identity for home |
+
+## Get your first customer (checklist)
+
+1. **Set church name** in `api/_program.js`
+2. **Write programme copy** (prayer / worship / sermon text) for each slot
+3. **Deploy** to production
+4. **Test** on phone: open `/listen` → tap play → hear voice
+5. **WhatsApp the link** to 5–10 members of that church
+6. **Sit with the pastor** — 10 min demo: “This is your station. Share this link.”
+7. **Ask for a pilot yes** — free 30 days, then paid monthly
+
+### Suggested pilot offer
+
+> Free for 30 days for your church. Members get one link. You get a 24/7 programme.  
+> After that: **$29–49/month** per station (adjust to market).
+
+## Local dev
+
+```bash
+npx vercel dev
+# open http://localhost:3000/listen
+```
+
+## Stack
+
+Static HTML + Vercel serverless. No build step. No paid TTS for v1 (browser Web Speech API).
 
 ## License
 

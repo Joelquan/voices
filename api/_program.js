@@ -1,3 +1,17 @@
+/**
+ * Single-station launch config for first customer.
+ * Edit STATION + programmeSlots when onboarding a church.
+ */
+
+const STATION = {
+  name: 'Grace Community Church',
+  location: 'Accra, Ghana',
+  tagline: '24/7 church radio for our family',
+  listeners: 12,
+  // Share / brand
+  shortCode: 'grace',
+};
+
 const programSlots = [
   {
     id: 'early-prayer',
@@ -9,23 +23,25 @@ const programSlots = [
     description: 'Prayer and preparation for the day.',
     sample: {
       title: 'Early Morning Prayers',
-      subtitle: 'Grace Community Church',
-      text: 'Lord, cover this church family today. Guide every home, every journey, and every decision.',
+      subtitle: STATION.name,
+      text:
+        'Good morning, church family. Let us begin this day with the Lord. Father, we thank You for life, for breath, and for mercy that is new every morning. Cover every home connected to this station. Guide our steps, guard our hearts, and let Your peace rest on our children, our work, and our city. In Jesus’ name, amen.',
       duration: 3600,
     },
   },
   {
     id: 'morning-worship',
-    name: 'Morning Worship Set',
+    name: 'Morning Worship',
     timeRange: '6:00 AM - 9:00 AM',
     contentType: 'worship',
     startHour: 6,
     endHour: 9,
-    description: 'A morning worship block for members joining from home, work, and the road.',
+    description: 'Worship and encouragement for the morning.',
     sample: {
-      title: 'Morning Worship Set',
-      subtitle: 'Grace Community Church',
-      text: 'Welcome to Voices. Grace Community Church is on the air with morning worship from Accra.',
+      title: 'Morning Worship',
+      subtitle: STATION.name,
+      text:
+        'Welcome to Voices, the radio heart of our church. This is a morning of worship. Lift your voice where you are — in the car, in the kitchen, on the way to work. Great is the Lord, and greatly to be praised. May this block fill your home with hope and praise as we start the day together.',
       duration: 10800,
     },
   },
@@ -36,11 +52,12 @@ const programSlots = [
     contentType: 'announcement',
     startHour: 9,
     endHour: 10,
-    description: 'Approved messages and birthday greetings from church members.',
+    description: 'Greetings and encouragement from the church family.',
     sample: {
       title: 'Member Shoutouts',
-      subtitle: 'Approved queue',
-      text: 'Birthday greetings, testimonies, and encouragement from the church family.',
+      subtitle: 'Church family',
+      text:
+        'This is Member Shoutouts. If you are listening from near or far, you are part of this family. We celebrate birthdays, testimonies, and simple words of love. Send your greeting to the station team, and may every message remind someone they are not alone.',
       duration: 3600,
     },
   },
@@ -54,8 +71,9 @@ const programSlots = [
     description: 'Replay of the latest Sunday message.',
     sample: {
       title: 'Sunday Sermon Replay',
-      subtitle: 'Pastor Amos',
-      text: 'Faith grows when the word of God becomes the rhythm of the home.',
+      subtitle: 'Word of the week',
+      text:
+        'Faith comes by hearing, and hearing by the word of God. Today we replay the heart of Sunday’s message: trust God in the ordinary places. When pressure rises, return to His promises. When joy comes, give thanks. Let the word shape how you speak, work, and love this week.',
       duration: 7200,
     },
   },
@@ -66,11 +84,12 @@ const programSlots = [
     contentType: 'prayer',
     startHour: 12,
     endHour: 15,
-    description: 'A midday prayer pause and encouragement block.',
+    description: 'A midday prayer pause and encouragement.',
     sample: {
       title: 'Midday Prayers',
-      subtitle: 'Grace Community Church',
-      text: 'May peace meet every listener in the middle of the day.',
+      subtitle: STATION.name,
+      text:
+        'Midday pause. Wherever you are, take a breath. Lord, meet us in the middle of the day. Renew strength for those who are tired, peace for the anxious, and wisdom for every decision still ahead. We cast our cares on You, because You care for us.',
       duration: 10800,
     },
   },
@@ -81,11 +100,12 @@ const programSlots = [
     contentType: 'worship',
     startHour: 15,
     endHour: 18,
-    description: 'Worship music and short encouragement for the afternoon.',
+    description: 'Worship and short encouragement for the afternoon.',
     sample: {
       title: 'Afternoon Worship Mix',
       subtitle: 'Voices Worship',
-      text: 'A worship mix for the afternoon, keeping the church connected wherever members are listening.',
+      text:
+        'Afternoon worship is on. Let praise reset the tone of your day. The Lord is good, and His mercy endures forever. Stay with us as we keep the church connected — one song, one prayer, one family across many places.',
       duration: 10800,
     },
   },
@@ -100,7 +120,8 @@ const programSlots = [
     sample: {
       title: 'Evening Devotional',
       subtitle: 'Psalm 23:1-3',
-      text: 'The Lord is my shepherd; I shall not want. He maketh me to lie down in green pastures.',
+      text:
+        'The Lord is my shepherd; I shall not want. He makes me to lie down in green pastures. He leads me beside the still waters. He restores my soul. Church family, as evening settles, rest in the care of the Shepherd. Forgive quickly, love deeply, and end this day with gratitude.',
       duration: 21600,
     },
   },
@@ -115,7 +136,8 @@ const programSlots = [
     sample: {
       title: 'Night Watch',
       subtitle: 'Psalm 4:8',
-      text: 'I will both lay me down in peace, and sleep: for thou, Lord, only makest me dwell in safety.',
+      text:
+        'I will both lay me down in peace, and sleep: for thou, Lord, only makest me dwell in safety. This is Night Watch. For those awake, for those in shift work, for those carrying a burden into the night — the Lord is near. Rest under His covering until morning light.',
       duration: 18000,
     },
   },
@@ -139,8 +161,17 @@ function getProgress(slot, date = new Date()) {
   return Math.min(100, Math.round((elapsed / total) * 100));
 }
 
+/** Build a spoken script for TTS (intro + body, loops cleanly). */
+function getSpeakScript(slot) {
+  const title = slot.sample?.title || slot.name;
+  const body = slot.sample?.text || slot.description || '';
+  return `You are listening to ${STATION.name}. Now on air: ${title}. ${body}`;
+}
+
 module.exports = {
+  STATION,
   programSlots,
   getCurrentSlot,
   getProgress,
+  getSpeakScript,
 };
