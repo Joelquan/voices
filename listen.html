@@ -549,6 +549,73 @@ function loadCurrentStation(){
   if(!Number.isNaN(numericListeners)) listenerCount = numericListeners;
 }
 
+async function loadStationApi(){
+  try {
+    const [nowRes, programRes] = await Promise.all([
+      fetch('/api/station/now'),
+      fetch('/api/program/today')
+    ]);
+
+    if(nowRes.ok){
+      const now = await nowRes.json();
+      if(now.station){
+        currentStation = {
+          ...currentStation,
+          name: now.station.name || currentStation.name,
+          location: now.station.location || currentStation.location,
+          listeners: String(now.station.listeners || currentStation.listeners)
+        };
+        document.querySelectorAll('.station-name').forEach(el=>{ el.textContent = currentStation.name; });
+        document.querySelectorAll('.station-location').forEach(el=>{ el.textContent = currentStation.location; });
+      }
+      if(now.content){
+        currentStation.programme = now.content.title || currentStation.programme;
+        document.getElementById('npTitle').textContent = currentStation.programme;
+        document.getElementById('progressFill').style.width = (now.schedule?.progress || 0) + '%';
+      }
+    }
+
+    if(programRes.ok){
+      const program = await programRes.json();
+      renderProgramme(program.slots || [], program.currentSlotId);
+    }
+  } catch(e) {
+    console.warn('Voices API unavailable, using local prototype data.', e);
+  }
+}
+
+function badgeClass(type){
+  const classes = {
+    worship: 'pb-worship',
+    prayer: 'pb-auto',
+    sermon: 'pb-auto',
+    announcement: 'pb-auto',
+    devotional: 'pb-auto',
+    live: 'pb-live',
+    weather: 'pb-weather',
+    news: 'pb-news'
+  };
+  return classes[type] || 'pb-auto';
+}
+
+function renderProgramme(slots, currentSlotId){
+  const list = document.querySelector('.prog-list');
+  if(!list || !slots.length) return;
+  list.innerHTML = slots.map(slot=>{
+    const start = slot.timeRange.split(' - ')[0] || '';
+    const isCurrent = slot.id === currentSlotId || slot.isCurrent;
+    const dot = isCurrent ? 'current' : 'upcoming';
+    const label = isCurrent ? 'Now' : (slot.contentType || 'Auto');
+    return `
+      <div class="prog-item ${isCurrent ? 'current-item' : ''}">
+        <span class="prog-time">${escapeHtml(start)}</span>
+        <div class="prog-dot ${dot}"></div>
+        <div class="prog-info"><div class="prog-name">${escapeHtml(slot.name)}</div><div class="prog-type">${escapeHtml(slot.description || slot.timeRange)}</div></div>
+        <span class="prog-badge ${badgeClass(slot.contentType)}">${escapeHtml(label)}</span>
+      </div>`;
+  }).join('');
+}
+
 function escapeHtml(value){
   return value.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
@@ -573,6 +640,7 @@ async function copyText(value){
 }
 
 loadCurrentStation();
+loadStationApi();
 
 // Build voice wave bars
 const vwave = document.getElementById('vwave');
