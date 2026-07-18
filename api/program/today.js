@@ -1,7 +1,10 @@
-const { STATION, programSlots, getCurrentSlot } = require('../_program');
+const { STATION, programSlots, getCurrentSlot, managerBuildRundown } = require('../_agents');
 
 module.exports = function handler(req, res) {
-  const current = getCurrentSlot();
+  const now = new Date();
+  const current = getCurrentSlot(now);
+  const rundown = managerBuildRundown(now);
+
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.status(200).json({
@@ -12,6 +15,17 @@ module.exports = function handler(req, res) {
       listeners: STATION.listeners,
     },
     currentSlotId: current.id,
+    agentsOnline: rundown.agentsOnline,
+    nowRundown: {
+      segmentCount: rundown.segments.length,
+      segments: rundown.segments.map((s) => ({
+        id: s.id,
+        type: s.type,
+        title: s.title,
+        agent: s.agent,
+        durationSec: s.durationSec,
+      })),
+    },
     slots: programSlots.map((slot) => ({
       id: slot.id,
       name: slot.name,

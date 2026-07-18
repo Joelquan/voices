@@ -257,8 +257,8 @@ Packs never delete church pins.
 
 | Phase | Ship | Agent surface |
 |-------|------|----------------|
-| **v1 (now)** | Fixed grid + TTS scripts in `api/_program.js` | Manual “DJ read” only |
-| **v1.1** | Rundown JSON API + player plays segment list | `programmer` rules in code; `dj` templates |
+| **v1 (shipped)** | Rundown JSON + multi-segment TTS player + agent room in code | `api/_agents.js`, `GET /api/rundown/current`, listen queue |
+| **v1.1** | Longer dayparts, better DJ bridges, pastor pin API | expand programmer rules |
 | **v1.2** | Church library upload + pin to grid | `librarian` |
 | **v1.3** | Weather + Bible plan + news brief segments | `weather`, `scripture`, `news` |
 | **v1.4** | Licensed/open music beds | `music` |

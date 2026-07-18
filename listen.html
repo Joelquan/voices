@@ -262,7 +262,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   <div class="now-playing">
     <div class="np-label">Now Playing</div>
     <div class="np-title" id="npTitle">Morning Worship</div>
-    <div id="npMode" style="margin-top:8px;font-size:12px;color:var(--muted);line-height:1.4">Voice mode · Tap play to hear today’s programme</div>
+    <div id="npSegTitle" style="margin-top:6px;font-size:13px;font-weight:500;color:var(--text)">—</div>
+    <div id="npMode" style="margin-top:6px;font-size:12px;color:var(--muted);line-height:1.4">v1 agents · Tap play for AI DJ rundown</div>
+    <div id="rundownList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;max-height:140px;overflow:auto"></div>
   </div>
 
   <!-- PROGRESS -->
@@ -528,6 +530,8 @@ let previewInterval = null;
 let previewProgress = 0;
 let listenerCount = 12;
 let speakText = '';
+let rundownSegments = [];
+let segmentIndex = 0;
 let speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 let preferredVoice = null;
 let currentStation = {
@@ -539,7 +543,6 @@ let currentStation = {
 };
 
 function getStationLink(){
-  // Clean share URL for members
   return window.location.origin + '/listen';
 }
 
@@ -561,7 +564,6 @@ function pickVoice(){
   if(!speechSupported) return null;
   const voices = speechSynthesis.getVoices() || [];
   if(!voices.length) return null;
-  // Prefer natural English voices
   const preferred = [
     /Samantha/i, /Karen/i, /Daniel/i, /Tessa/i, /Moira/i,
     /Google US English/i, /Google UK English Female/i, /Microsoft (Aria|Jenny|Guy)/i,
@@ -590,22 +592,100 @@ function stopSpeech(){
   setPlayUi(false);
 }
 
-function buildFallbackScript(){
-  return `You are listening to ${currentStation.name}. Now on air: ${currentStation.programme}. Welcome to our church radio. Stay with us for prayer, worship, and the word.`;
+function buildFallbackSegments(){
+  return [
+    {
+      id: 'seg_01',
+      type: 'station_id',
+      agent: 'dj',
+      title: 'Station ID',
+      speakText: `You’re listening to ${currentStation.name} on Voices. ${currentStation.tagline || ''}`
+    },
+    {
+      id: 'seg_02',
+      type: 'devotional',
+      agent: 'librarian',
+      title: currentStation.programme,
+      speakText: `Now on air: ${currentStation.programme}. Welcome to our church radio. Stay with us for prayer, worship, and the word.`
+    }
+  ];
 }
 
-function startSpeech(){
-  if(!speechSupported){
-    showToast('Voice playback needs Chrome, Safari, or Edge');
+function renderRundownList(){
+  const box = document.getElementById('rundownList');
+  if(!box) return;
+  if(!rundownSegments.length){
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = rundownSegments.map((s, i) => {
+    const active = i === segmentIndex && window.__voicesWantPlay;
+    const done = i < segmentIndex;
+    const mark = active ? '▶' : done ? '✓' : '·';
+    const color = active ? 'var(--accent,#2563eb)' : 'var(--muted)';
+    return `<div style="display:flex;gap:8px;align-items:flex-start;font-size:11px;line-height:1.35;color:${color}">
+      <span style="width:12px;flex-shrink:0">${mark}</span>
+      <span><strong style="font-weight:600">${escapeHtml(s.title || s.type)}</strong>
+      <span style="opacity:.75"> · ${escapeHtml(s.agent || s.type)}</span></span>
+    </div>`;
+  }).join('');
+}
+
+function setSegmentUi(seg, index, total){
+  segmentIndex = index;
+  const segTitle = document.getElementById('npSegTitle');
+  const mode = document.getElementById('npMode');
+  if(segTitle){
+    segTitle.textContent = seg
+      ? `${seg.title || seg.type}${seg.ref ? ' · ' + seg.ref : ''}`
+      : '—';
+  }
+  if(mode && seg){
+    mode.textContent = `On air · ${index + 1}/${total} · AI ${seg.agent || 'dj'} · ${seg.type}`;
+  }
+  if(seg){
+    progress = total ? Math.round(((index + 0.15) / total) * 100) : 0;
+    const fill = document.getElementById('progressFill');
+    if(fill) fill.style.width = progress + '%';
+    const cur = document.getElementById('currentTime');
+    if(cur) cur.textContent = `${index + 1}/${total}`;
+  }
+  renderRundownList();
+}
+
+function playSegmentAt(index){
+  if(!window.__voicesWantPlay){
     setPlayUi(false);
     return;
   }
-  const text = (speakText || buildFallbackScript()).trim();
-  if(!text){
-    showToast('No programme text yet');
+  if(!speechSupported){
+    showToast('Voice playback needs Chrome, Safari, or Edge');
+    window.__voicesWantPlay = false;
+    setPlayUi(false);
     return;
   }
-  stopSpeech();
+  if(!rundownSegments.length){
+    rundownSegments = buildFallbackSegments();
+  }
+  if(index >= rundownSegments.length){
+    // Hour complete — refresh rundown and loop
+    loadStationApi().finally(() => {
+      if(!window.__voicesWantPlay) { setPlayUi(false); return; }
+      segmentIndex = 0;
+      playSegmentAt(0);
+    });
+    return;
+  }
+
+  const seg = rundownSegments[index];
+  const text = String(seg.speakText || '').trim();
+  if(!text){
+    playSegmentAt(index + 1);
+    return;
+  }
+
+  try { speechSynthesis.cancel(); } catch(e) {}
+
   const u = new SpeechSynthesisUtterance(text);
   const voice = ensureVoice();
   if(voice) u.voice = voice;
@@ -614,28 +694,32 @@ function startSpeech(){
   u.volume = 1;
   u.onstart = () => {
     setPlayUi(true);
-    const mode = document.getElementById('npMode');
-    if(mode) mode.textContent = 'On air · Voice mode (browser speech)';
+    setSegmentUi(seg, index, rundownSegments.length);
   };
   u.onend = () => {
-    // Loop current block so the station feels continuous
     if(!window.__voicesWantPlay){
       setPlayUi(false);
+      renderRundownList();
       return;
     }
-    loadStationApi().finally(() => {
-      if(window.__voicesWantPlay) startSpeech();
-      else setPlayUi(false);
-    });
+    playSegmentAt(index + 1);
   };
   u.onerror = () => {
-    setPlayUi(false);
-    window.__voicesWantPlay = false;
-    showToast('Could not start voice — try again');
+    // Skip bad segment rather than killing whole hour
+    if(window.__voicesWantPlay) playSegmentAt(index + 1);
+    else setPlayUi(false);
   };
-  window.__voicesWantPlay = true;
   setPlayUi(true);
   speechSynthesis.speak(u);
+}
+
+function startRundownPlayback(){
+  window.__voicesWantPlay = true;
+  if(!rundownSegments.length){
+    loadStationApi().finally(() => playSegmentAt(segmentIndex || 0));
+    return;
+  }
+  playSegmentAt(segmentIndex || 0);
 }
 
 function loadCurrentStation(){
@@ -651,7 +735,6 @@ function loadCurrentStation(){
   if(!Number.isNaN(numericListeners)) listenerCount = numericListeners;
   const listenerEl = document.getElementById('listenerCount');
   if(listenerEl) listenerEl.textContent = listenerCount;
-  // Start paused — real audio only after user taps play
   setPlayUi(false);
   const eq = document.getElementById('eqBars');
   if(eq) eq.classList.add('paused');
@@ -659,9 +742,10 @@ function loadCurrentStation(){
 
 async function loadStationApi(){
   try {
-    const [nowRes, programRes] = await Promise.all([
+    const [nowRes, programRes, rundownRes] = await Promise.all([
       fetch('/api/station/now'),
-      fetch('/api/program/today')
+      fetch('/api/program/today'),
+      fetch('/api/rundown/current')
     ]);
 
     if(nowRes.ok){
@@ -684,12 +768,9 @@ async function loadStationApi(){
         document.getElementById('npTitle').textContent = currentStation.programme;
         progress = now.schedule?.progress || 0;
         document.getElementById('progressFill').style.width = progress + '%';
-        const mode = document.getElementById('npMode');
-        if(mode && !window.__voicesWantPlay){
-          mode.textContent = (now.content.playbackMode === 'tts'
-            ? 'Voice mode · Tap play to hear this hour’s programme'
-            : 'On air');
-        }
+      }
+      if(now.rundown?.segments?.length){
+        rundownSegments = now.rundown.segments;
       }
       const numericListeners = parseInt(String(currentStation.listeners).replace(/,/g,''), 10);
       if(!Number.isNaN(numericListeners)){
@@ -697,6 +778,30 @@ async function loadStationApi(){
         const listenerEl = document.getElementById('listenerCount');
         if(listenerEl) listenerEl.textContent = listenerCount;
       }
+      const mode = document.getElementById('npMode');
+      if(mode && !window.__voicesWantPlay){
+        const n = rundownSegments.length;
+        const agents = (now.rundown?.agentsOnline || []).length;
+        mode.textContent = n
+          ? `v1 · ${n} segments this hour · ${agents} agents · Tap play`
+          : 'v1 agents · Tap play';
+      }
+    }
+
+    if(rundownRes && rundownRes.ok){
+      const rd = await rundownRes.json();
+      if(rd.segments?.length) rundownSegments = rd.segments;
+    }
+
+    if(!window.__voicesWantPlay){
+      segmentIndex = 0;
+      const first = rundownSegments[0];
+      if(first) setSegmentUi(first, 0, rundownSegments.length);
+      else renderRundownList();
+      const mode = document.getElementById('npMode');
+      if(mode) mode.textContent = `v1 · ${rundownSegments.length} segments · AI DJ ready · Tap play`;
+    } else {
+      renderRundownList();
     }
 
     if(programRes.ok){
@@ -705,7 +810,8 @@ async function loadStationApi(){
     }
   } catch(e) {
     console.warn('Voices API unavailable, using local prototype data.', e);
-    speakText = buildFallbackScript();
+    if(!rundownSegments.length) rundownSegments = buildFallbackSegments();
+    renderRundownList();
   }
 }
 
@@ -788,11 +894,11 @@ function togglePlay(){
     window.__voicesWantPlay = false;
     stopSpeech();
     const mode = document.getElementById('npMode');
-    if(mode) mode.textContent = 'Paused · Tap play to continue';
+    if(mode) mode.textContent = 'Paused · Tap play to continue rundown';
+    renderRundownList();
     showToast('Paused');
     return;
   }
-  // Resume / start
   if(speechSupported && speechSynthesis.paused){
     try {
       speechSynthesis.resume();
@@ -801,8 +907,8 @@ function togglePlay(){
       return;
     } catch(e) {}
   }
-  startSpeech();
-  showToast('Playing · ' + currentStation.programme);
+  startRundownPlayback();
+  showToast('On air · AI DJ rundown');
 }
 
 function seekTrack(e){

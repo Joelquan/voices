@@ -1,8 +1,17 @@
-const { STATION, getCurrentSlot, getProgress, getSpeakScript } = require('../_program');
+const {
+  managerBuildRundown,
+  rundownToSpeakText,
+  getCurrentSlot,
+  getProgress,
+  STATION,
+} = require('../_agents');
 
 module.exports = function handler(req, res) {
-  const slot = getCurrentSlot();
-  const speakText = getSpeakScript(slot);
+  const now = new Date();
+  const slot = getCurrentSlot(now);
+  const rundown = managerBuildRundown(now);
+  const speakText = rundownToSpeakText(rundown);
+  const currentSeg = rundown.segments[0] || null;
 
   res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=60');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,23 +25,33 @@ module.exports = function handler(req, res) {
     },
     content: {
       type: slot.contentType,
-      title: slot.sample.title,
-      subtitle: slot.sample.subtitle,
+      title: slot.sample?.title || slot.name,
+      subtitle: slot.sample?.subtitle,
       description: slot.description,
-      // TTS launch: no MP3 yet — client speaks speakText via Web Speech
       audioUrl: null,
-      playbackMode: 'tts',
+      playbackMode: 'rundown',
       speakText,
-      duration: slot.sample.duration,
-      reference: slot.sample.subtitle,
-      text: slot.sample.text,
+      duration: slot.sample?.duration,
+      reference: slot.sample?.subtitle,
+      text: slot.sample?.text,
+      segmentCount: rundown.segments.length,
     },
     schedule: {
       id: slot.id,
       currentSlot: slot.name,
       timeRange: slot.timeRange,
       description: slot.description,
-      progress: getProgress(slot),
+      progress: getProgress(slot, now),
+    },
+    rundown: {
+      version: rundown.version,
+      theme: rundown.theme,
+      producedBy: rundown.producedBy,
+      agentsOnline: rundown.agentsOnline,
+      totals: rundown.totals,
+      segments: rundown.segments,
+      currentSegment: currentSeg,
+      compliance: rundown.compliance,
     },
   });
 };

@@ -19,12 +19,14 @@ North star = church library + enrichment, mixed and hosted by agents.
 
 | Piece | Status |
 |-------|--------|
-| `/listen` player | Live — Web Speech (free TTS) reads the current hour’s programme |
+| **Agent room** | Live — manager, DJ, programmer, scripture, weather, announcements, music, news, compliance (`api/_agents.js`) |
+| **Hour rundown** | Live — multi-segment JSON · `GET /api/rundown/current` |
+| `/listen` player | Live — plays rundown segment-by-segment (Web Speech TTS) |
 | 24-hour programme grid | Live — `api/_program.js` |
 | Share link (WhatsApp / copy) | Live — `origin/listen` |
 | Home = pilot station | Live — single-station launch CTA |
-| Real MP3 / stream | Next |
-| Multi-church directory | Later |
+| Church upload library | Next (v1.2) |
+| Real MP3 / licensed music | Next |
 | Auth / billing | Later |
 
 ## Customize the first church
@@ -63,9 +65,10 @@ npx vercel --prod
 
 | Endpoint | Role |
 |----------|------|
-| `GET /api/station/now` | Now playing + `speakText` for TTS |
-| `GET /api/program/today` | Full day grid |
-| `GET /api/station/config` | Public station identity for home |
+| `GET /api/rundown/current` | **v1** Full hour rundown (segments + agents) |
+| `GET /api/station/now` | Now playing + rundown + flat `speakText` |
+| `GET /api/program/today` | Day grid + now rundown summary |
+| `GET /api/station/config` | Public station identity + agents online |
 
 ## Get your first customer (checklist)
 
