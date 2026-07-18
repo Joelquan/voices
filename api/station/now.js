@@ -6,10 +6,10 @@ const {
   STATION,
 } = require('../_agents');
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   const now = new Date();
   const slot = getCurrentSlot(now);
-  const rundown = managerBuildRundown(now);
+  const rundown = await managerBuildRundown(now);
   const speakText = rundownToSpeakText(rundown);
   const currentSeg = rundown.segments[0] || null;
 
@@ -22,6 +22,7 @@ module.exports = function handler(req, res) {
       tagline: STATION.tagline,
       listeners: STATION.listeners,
       shortCode: STATION.shortCode,
+      driveFolderUrl: STATION.driveFolderUrl,
     },
     content: {
       type: slot.contentType,
@@ -43,6 +44,7 @@ module.exports = function handler(req, res) {
       description: slot.description,
       progress: getProgress(slot, now),
     },
+    library: rundown.library,
     rundown: {
       version: rundown.version,
       theme: rundown.theme,

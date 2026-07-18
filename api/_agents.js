@@ -10,6 +10,7 @@ const {
   getCurrentSlot,
   getProgress,
 } = require('./_program');
+const { fetchLibrary, pickForSlot } = require('./_drive');
 
 // ── Church week notes (v1: edit here; later from dashboard) ───────
 const WEEKLY_ANNOUNCEMENTS = [
@@ -121,26 +122,30 @@ function djClose(slot) {
 
 /**
  * Build a multi-segment hour from the current programme slot + enrichment.
- * v1: all speakable (TTS); audioUrl reserved for later library/music.
+ * Prefers Google Drive audio (real human recordings) when library has files.
  */
-function programmerBuildHour(slot, date = new Date()) {
+function programmerBuildHour(slot, date = new Date(), libraryItems = []) {
   const segments = [];
   const bible = pickBible(date);
   const announcement = pickAnnouncement(date);
   const hour = date.getHours();
   const contentType = slot.contentType || 'devotional';
+  const driveMain = pickForSlot(libraryItems, contentType, date);
+  const driveWorship = pickForSlot(libraryItems, 'worship', date);
+  const driveAnnounce = pickForSlot(libraryItems, 'announcement', date);
 
   const push = (seg) => {
     const speakText = seg.speakText || '';
+    const audioUrl = seg.audioUrl || null;
     segments.push({
       id: `seg_${String(segments.length + 1).padStart(2, '0')}`,
-      durationSec: seg.durationSec || estimateDurationSec(speakText),
       source: seg.source || 'system',
       agent: seg.agent || 'programmer',
-      audioUrl: seg.audioUrl || null,
-      playbackMode: seg.audioUrl ? 'audio' : 'tts',
       ...seg,
       speakText,
+      audioUrl,
+      playbackMode: audioUrl ? 'audio' : 'tts',
+      durationSec: seg.durationSec || (audioUrl ? 300 : estimateDurationSec(speakText)),
     });
   };
 
@@ -164,15 +169,27 @@ function programmerBuildHour(slot, date = new Date()) {
     });
   }
 
-  // 3) Announcements — day hours (skip deep night)
-  if (announcement && hour >= 7 && hour < 21) {
-    push({
-      type: 'announcement',
-      agent: 'announcements',
-      source: 'church',
-      title: 'This week at church',
-      speakText: `Church announcements. ${announcement}`,
-    });
+  // 3) Announcements — Drive audio if present, else text
+  if (hour >= 7 && hour < 21) {
+    if (driveAnnounce?.audioUrl) {
+      push({
+        type: 'announcement',
+        agent: 'announcements',
+        source: 'drive',
+        title: driveAnnounce.title,
+        speakText: `Next, a message from ${STATION.name}.`,
+        audioUrl: driveAnnounce.audioUrl,
+        driveFileId: driveAnnounce.id,
+      });
+    } else if (announcement) {
+      push({
+        type: 'announcement',
+        agent: 'announcements',
+        source: 'church',
+        title: 'This week at church',
+        speakText: `Church announcements. ${announcement}`,
+      });
+    }
   }
 
   // 4) Scripture often — always for prayer/devotional; often otherwise
@@ -192,17 +209,31 @@ function programmerBuildHour(slot, date = new Date()) {
     });
   }
 
-  // 5) Main block from programme slot (church / teaching body)
-  const mainText = slot.sample?.text || slot.description || '';
-  push({
-    type: contentType === 'sermon' ? 'sermon' : contentType === 'worship' ? 'teaching_short' : contentType,
-    agent: 'librarian',
-    source: contentType === 'announcement' ? 'church' : 'church',
-    title: slot.sample?.title || slot.name,
-    subtitle: slot.sample?.subtitle,
-    speakText: mainText,
-    libraryId: slot.id,
-  });
+  // 5) Main block — prefer Google Drive recording (human voice)
+  if (driveMain?.audioUrl) {
+    push({
+      type: contentType === 'sermon' ? 'sermon' : contentType,
+      agent: 'librarian',
+      source: 'drive',
+      title: driveMain.title,
+      subtitle: `From Drive · ${driveMain.folderName || driveMain.category}`,
+      speakText: `Now airing from our library: ${driveMain.title}.`,
+      audioUrl: driveMain.audioUrl,
+      driveFileId: driveMain.id,
+      durationSec: 600,
+    });
+  } else {
+    const mainText = slot.sample?.text || slot.description || '';
+    push({
+      type: contentType === 'sermon' ? 'sermon' : contentType === 'worship' ? 'teaching_short' : contentType,
+      agent: 'librarian',
+      source: 'church',
+      title: slot.sample?.title || slot.name,
+      subtitle: slot.sample?.subtitle,
+      speakText: mainText,
+      libraryId: slot.id,
+    });
+  }
 
   // 6) Optional short news-style community note midday (not political news v1)
   if (hour >= 12 && hour < 14) {
@@ -215,16 +246,29 @@ function programmerBuildHour(slot, date = new Date()) {
     });
   }
 
-  // 7) Worship / enrichment bridge (spoken bed until real music catalog)
+  // 7) Worship — Drive audio preferred over spoken bed
   if (contentType === 'worship' || contentType === 'prayer' || hour % 3 === 0) {
-    push({
-      type: 'music',
-      agent: 'music',
-      source: 'platform',
-      title: 'Worship moment',
-      speakText: `A short worship moment with ${STATION.name}. Take a breath. Great is the Lord, and greatly to be praised. Let thanksgiving rise where you are — in the car, at work, or at home.`,
-      license: 'original-script-v1',
-    });
+    if (driveWorship?.audioUrl && driveWorship.id !== driveMain?.id) {
+      push({
+        type: 'music',
+        agent: 'music',
+        source: 'drive',
+        title: driveWorship.title,
+        speakText: `Worship from our library: ${driveWorship.title}.`,
+        audioUrl: driveWorship.audioUrl,
+        driveFileId: driveWorship.id,
+        durationSec: 240,
+      });
+    } else {
+      push({
+        type: 'music',
+        agent: 'music',
+        source: 'platform',
+        title: 'Worship moment',
+        speakText: `A short worship moment with ${STATION.name}. Take a breath. Great is the Lord, and greatly to be praised. Let thanksgiving rise where you are — in the car, at work, or at home.`,
+        license: 'original-script-v1',
+      });
+    }
   }
 
   // 8) DJ close
@@ -275,12 +319,15 @@ function complianceCheck(segments) {
 
 // ── Manager agent ─────────────────────────────────────────────────
 
-function managerBuildRundown(date = new Date()) {
+async function managerBuildRundown(date = new Date()) {
   const slot = getCurrentSlot(date);
-  const draft = programmerBuildHour(slot, date);
+  const library = await fetchLibrary(STATION);
+  const libraryItems = library.items || [];
+  const draft = programmerBuildHour(slot, date, libraryItems);
   const { status, notes, segments } = complianceCheck(draft);
 
   const totalSec = segments.reduce((n, s) => n + (s.durationSec || 0), 0);
+  const driveSegments = segments.filter((s) => s.source === 'drive').length;
 
   return {
     version: 'v1',
@@ -308,7 +355,7 @@ function managerBuildRundown(date = new Date()) {
       description: slot.description,
       progress: getProgress(slot, date),
     },
-    producedBy: ['manager', 'programmer', 'dj', 'weather', 'scripture', 'announcements', 'music', 'news', 'compliance'],
+    producedBy: ['manager', 'programmer', 'dj', 'librarian', 'weather', 'scripture', 'announcements', 'music', 'news', 'compliance'],
     agentsOnline: [
       'manager',
       'dj',
@@ -321,6 +368,16 @@ function managerBuildRundown(date = new Date()) {
       'news',
       'compliance',
     ],
+    library: {
+      source: 'google-drive',
+      configured: Boolean(library.configured),
+      ok: Boolean(library.ok),
+      count: libraryItems.length,
+      driveSegments,
+      folderId: library.folderId || STATION.driveFolderId,
+      folderUrl: STATION.driveFolderUrl,
+      message: library.message || library.error || null,
+    },
     segments,
     totals: {
       segmentCount: segments.length,
@@ -333,6 +390,8 @@ function managerBuildRundown(date = new Date()) {
       tagline: STATION.tagline,
       listeners: STATION.listeners,
       shortCode: STATION.shortCode,
+      driveFolderId: STATION.driveFolderId,
+      driveFolderUrl: STATION.driveFolderUrl,
     },
   };
 }

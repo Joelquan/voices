@@ -1,9 +1,9 @@
 const { STATION, programSlots, getCurrentSlot, managerBuildRundown } = require('../_agents');
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   const now = new Date();
   const current = getCurrentSlot(now);
-  const rundown = managerBuildRundown(now);
+  const rundown = await managerBuildRundown(now);
 
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,9 +13,11 @@ module.exports = function handler(req, res) {
       location: STATION.location,
       tagline: STATION.tagline,
       listeners: STATION.listeners,
+      driveFolderUrl: STATION.driveFolderUrl,
     },
     currentSlotId: current.id,
     agentsOnline: rundown.agentsOnline,
+    library: rundown.library,
     nowRundown: {
       segmentCount: rundown.segments.length,
       segments: rundown.segments.map((s) => ({
@@ -23,6 +25,8 @@ module.exports = function handler(req, res) {
         type: s.type,
         title: s.title,
         agent: s.agent,
+        source: s.source,
+        playbackMode: s.playbackMode,
         durationSec: s.durationSec,
       })),
     },

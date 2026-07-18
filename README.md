@@ -25,8 +25,8 @@ North star = church library + enrichment, mixed and hosted by agents.
 | 24-hour programme grid | Live — `api/_program.js` |
 | Share link (WhatsApp / copy) | Live — `origin/listen` |
 | Home = pilot station | Live — single-station launch CTA |
-| Church upload library | Next (v1.2) |
-| Real MP3 / licensed music | Next |
+| **Google Drive library** | Ready — drop MP3s in Drive; set `GOOGLE_API_KEY` ([docs/DRIVE.md](./docs/DRIVE.md)) |
+| Real human audio on air | When Drive has files + API key |
 | Auth / billing | Later |
 
 ## Customize the first church

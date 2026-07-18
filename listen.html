@@ -589,6 +589,7 @@ function stopSpeech(){
   if(speechSupported){
     try { speechSynthesis.cancel(); } catch(e) {}
   }
+  stopProgramAudio();
   setPlayUi(false);
 }
 
@@ -653,14 +654,18 @@ function setSegmentUi(seg, index, total){
   renderRundownList();
 }
 
+let programAudio = null;
+
+function stopProgramAudio(){
+  if(programAudio){
+    try { programAudio.pause(); programAudio.src = ''; } catch(e) {}
+    programAudio = null;
+  }
+}
+
 function playSegmentAt(index){
   if(!window.__voicesWantPlay){
-    setPlayUi(false);
-    return;
-  }
-  if(!speechSupported){
-    showToast('Voice playback needs Chrome, Safari, or Edge');
-    window.__voicesWantPlay = false;
+    stopProgramAudio();
     setPlayUi(false);
     return;
   }
@@ -668,7 +673,6 @@ function playSegmentAt(index){
     rundownSegments = buildFallbackSegments();
   }
   if(index >= rundownSegments.length){
-    // Hour complete — refresh rundown and loop
     loadStationApi().finally(() => {
       if(!window.__voicesWantPlay) { setPlayUi(false); return; }
       segmentIndex = 0;
@@ -678,14 +682,50 @@ function playSegmentAt(index){
   }
 
   const seg = rundownSegments[index];
+  setSegmentUi(seg, index, rundownSegments.length);
+
+  // Real human audio from Google Drive (or any audioUrl)
+  if(seg.audioUrl){
+    try { speechSynthesis.cancel(); } catch(e) {}
+    stopProgramAudio();
+    const audio = new Audio(seg.audioUrl);
+    programAudio = audio;
+    audio.onended = () => {
+      if(!window.__voicesWantPlay){ setPlayUi(false); return; }
+      playSegmentAt(index + 1);
+    };
+    audio.onerror = () => {
+      showToast('Audio failed — trying next segment');
+      if(window.__voicesWantPlay) playSegmentAt(index + 1);
+      else setPlayUi(false);
+    };
+    setPlayUi(true);
+    audio.play().catch(() => {
+      // Autoplay blocked or stream missing — fall back to TTS intro if any
+      const text = String(seg.speakText || '').trim();
+      if(text && speechSupported) speakTextSegment(seg, text, index);
+      else if(window.__voicesWantPlay) playSegmentAt(index + 1);
+    });
+    return;
+  }
+
   const text = String(seg.speakText || '').trim();
   if(!text){
     playSegmentAt(index + 1);
     return;
   }
+  if(!speechSupported){
+    showToast('Voice playback needs Chrome, Safari, or Edge');
+    window.__voicesWantPlay = false;
+    setPlayUi(false);
+    return;
+  }
+  speakTextSegment(seg, text, index);
+}
 
+function speakTextSegment(seg, text, index){
   try { speechSynthesis.cancel(); } catch(e) {}
-
+  stopProgramAudio();
   const u = new SpeechSynthesisUtterance(text);
   const voice = ensureVoice();
   if(voice) u.voice = voice;
@@ -705,7 +745,6 @@ function playSegmentAt(index){
     playSegmentAt(index + 1);
   };
   u.onerror = () => {
-    // Skip bad segment rather than killing whole hour
     if(window.__voicesWantPlay) playSegmentAt(index + 1);
     else setPlayUi(false);
   };

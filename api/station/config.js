@@ -1,8 +1,8 @@
 const { STATION, programSlots, getCurrentSlot, managerBuildRundown } = require('../_agents');
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   const current = getCurrentSlot();
-  const rundown = managerBuildRundown();
+  const rundown = await managerBuildRundown();
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.status(200).json({
@@ -16,6 +16,7 @@ module.exports = function handler(req, res) {
       timeRange: current.timeRange,
     },
     agentsOnline: rundown.agentsOnline,
+    library: rundown.library,
     sharePath: '/listen',
     slotCount: programSlots.length,
     rundownSegmentsNow: rundown.segments.length,

@@ -10,6 +10,9 @@ const STATION = {
   listeners: 12,
   // Share / brand
   shortCode: 'tema',
+  // Google Drive programme library (override with GOOGLE_DRIVE_FOLDER_ID env)
+  driveFolderId: '17G-YzPxBMj41bpxCJoRhz4Rp7vGubrDZ',
+  driveFolderUrl: 'https://drive.google.com/drive/folders/17G-YzPxBMj41bpxCJoRhz4Rp7vGubrDZ',
 };
 
 const programSlots = [
