@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload reading · Voices · The Church in Tema</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6fbf7;
+    --surface: #fff;
+    --border: #d9eadc;
+    --text: #102417;
+    --muted: #5f7465;
+    --green: #168a3a;
+    --green-dim: rgba(22,138,58,.12);
+    --live: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 80px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    margin: 8px 0 4px;
+  }
+  .sub { color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  input[type=text], select, textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 15px;
+    background: #fff;
+    margin-bottom: 14px;
+  }
+  textarea { min-height: 160px; resize: vertical; line-height: 1.55; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .drop {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 28px 16px;
+    text-align: center;
+    background: var(--green-dim);
+    cursor: pointer;
+    margin-bottom: 14px;
+  }
+  .drop strong { display: block; margin-bottom: 4px; }
+  .drop span { font-size: 13px; color: var(--muted); }
+  .drop.drag { border-color: var(--green); background: #e8f8ec; }
+  .btn {
+    appearance: none;
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    padding: 12px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .btn:disabled { opacity: .55; cursor: wait; }
+  .btn-ghost {
+    background: #fff;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .status { font-size: 13px; color: var(--muted); margin-top: 10px; min-height: 1.2em; }
+  .status.ok { color: var(--green); font-weight: 600; }
+  .status.err { color: var(--live); }
+  .list-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .list-item:last-child { border-bottom: none; }
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--green-dim);
+    color: var(--green);
+    white-space: nowrap;
+  }
+  .badge.tts { background: #fff3e0; color: #b86e00; }
+  .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .nav a {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 999px;
+  }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+  button.linkish {
+    background: none; border: none; color: var(--live); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <a href="/">Home</a>
+    <a href="/listen">Listen live</a>
+    <a href="/dashboard">Dashboard</a>
+  </nav>
+
+  <h1>Upload a reading</h1>
+  <p class="sub">
+    For <strong>The Church in Tema</strong>. Paste text or upload a document — Voices will put it on the live station
+    (neural TTS when configured, otherwise browser voice).
+  </p>
+
+  <div class="card">
+    <div class="drop" id="dropZone">
+      <strong>Drop a file here or click to choose</strong>
+      <span>.txt · .md · .pdf · .docx (text is extracted in your browser)</span>
+      <input type="file" id="fileInput" accept=".txt,.md,.pdf,.docx,text/plain,application/pdf" hidden>
+    </div>
+
+    <label for="title">Title</label>
+    <input type="text" id="title" placeholder="e.g. Sunday welcome · 19 July">
+
+    <div class="row">
+      <div>
+        <label for="type">Type</label>
+        <select id="type">
+          <option value="devotional">Devotional / reading</option>
+          <option value="sermon">Sermon text</option>
+          <option value="announcement">Announcement</option>
+          <option value="prayer">Prayer</option>
+          <option value="scripture">Scripture</option>
+        </select>
+      </div>
+      <div>
+        <label for="voice">Neural voice (if key set)</label>
+        <select id="voice">
+          <option value="shimmer">shimmer</option>
+          <option value="alloy">alloy</option>
+          <option value="nova">nova</option>
+          <option value="echo">echo</option>
+          <option value="fable">fable</option>
+          <option value="onyx">onyx</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="text">Text to read on air</label>
+    <textarea id="text" placeholder="Paste the full reading here…"></textarea>
+
+    <div class="actions">
+      <button class="btn" id="submitBtn" type="button">Upload to station</button>
+      <button class="btn btn-ghost" id="clearBtn" type="button">Clear</button>
+      <a class="btn btn-ghost" href="/listen" style="text-decoration:none;display:inline-flex;align-items:center">Open live player</a>
+    </div>
+    <p class="status" id="status"></p>
+    <p class="hint" id="ttsHint">Checking TTS status…</p>
+  </div>
+
+  <div class="card">
+    <label>On-air readings</label>
+    <div id="list">Loading…</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const statusEl = $('status');
+const dropZone = $('dropZone');
+const fileInput = $('fileInput');
+let lastFilename = null;
+
+if (window['pdfjsLib']) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+function setStatus(msg, kind) {
+  statusEl.textContent = msg || '';
+  statusEl.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+function fmtDur(sec) {
+  sec = Math.round(sec || 0);
+  return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+}
+
+async function extractPdf(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const parts = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    parts.push(content.items.map((it) => it.str).join(' '));
+  }
+  return parts.join('\n\n');
+}
+
+async function extractDocx(file) {
+  const buf = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer: buf });
+  return result.value || '';
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  lastFilename = file.name;
+  const name = file.name.toLowerCase();
+  setStatus('Reading ' + file.name + '…');
+  try {
+    let text = '';
+    if (name.endsWith('.pdf') || file.type === 'application/pdf') {
+      text = await extractPdf(file);
+    } else if (name.endsWith('.docx') || file.type.includes('wordprocessingml')) {
+      text = await extractDocx(file);
+    } else {
+      text = await file.text();
+    }
+    text = (text || '').trim();
+    if (!text) throw new Error('No text found in file');
+    $('text').value = text;
+    if (!$('title').value) {
+      $('title').value = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
+    }
+    setStatus('Extracted ' + text.split(/\s+/).length + ' words from ' + file.name, 'ok');
+  } catch (err) {
+    setStatus(String(err.message || err), 'err');
+  }
+}
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+;['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => {
+  e.preventDefault(); dropZone.classList.add('drag');
+}));
+;['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+}));
+dropZone.addEventListener('drop', e => {
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+$('clearBtn').onclick = () => {
+  $('title').value = '';
+  $('text').value = '';
+  lastFilename = null;
+  fileInput.value = '';
+  setStatus('');
+};
+
+async function refreshList() {
+  const box = $('list');
+  try {
+    const res = await fetch('/api/library/readings', { cache: 'no-store' });
+    const data = await res.json();
+    $('ttsHint').textContent = data.note || '';
+    if (!data.items?.length) {
+      box.innerHTML = '<p class="meta">No uploads yet. Add a reading above — it joins the live loop immediately.</p>';
+      return;
+    }
+    box.innerHTML = data.items.map(item => `
+      <div class="list-item">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600">${escapeHtml(item.title)}</div>
+          <div class="meta">${escapeHtml(item.type)} · ${fmtDur(item.durationSec)} · ${item.wordCount || 0} words · ${escapeHtml(item.preview || '')}</div>
+        </div>
+        <span class="badge ${item.hasAudio ? '' : 'tts'}">${item.hasAudio ? 'MP3 ready' : 'Browser TTS'}</span>
+        <button class="linkish" type="button" data-del="${item.id}">Remove</button>
+      </div>
+    `).join('');
+    box.querySelectorAll('[data-del]').forEach(btn => {
+      btn.onclick = async () => {
+        await fetch('/api/library/readings', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: btn.getAttribute('data-del') }),
+        });
+        refreshList();
+      };
+    });
+  } catch (err) {
+    box.innerHTML = '<p class="status err">Could not load readings.</p>';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+$('submitBtn').onclick = async () => {
+  const title = $('title').value.trim();
+  const text = $('text').value.trim();
+  const type = $('type').value;
+  const voice = $('voice').value;
+  if (!title || !text) {
+    setStatus('Title and text are required.', 'err');
+    return;
+  }
+  $('submitBtn').disabled = true;
+  setStatus('Uploading… generating speech if neural TTS is available…');
+  try {
+    const res = await fetch('/api/library/readings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, text, type, voice, filename: lastFilename }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    const mode = data.reading?.hasAudio ? 'Neural MP3 on the live loop' : 'Browser TTS on the live loop';
+    setStatus('Uploaded: ' + data.reading.title + ' · ' + mode, 'ok');
+    $('text').value = '';
+    $('title').value = '';
+    lastFilename = null;
+    refreshList();
+  } catch (err) {
+    setStatus(String(err.message || err), 'err');
+  } finally {
+    $('submitBtn').disabled = false;
+  }
+};
+
+refreshList();
+</script>
+</body>
+</html>

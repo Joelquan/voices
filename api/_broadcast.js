@@ -5,6 +5,7 @@
 
 const { STATION, getCurrentSlot, getProgress } = require('./_program');
 const { fetchLibrary } = require('./_drive');
+const { readingsAsPlaylistItems } = require('./_readings');
 
 /** Human sample beds shipped in /public/sample-audio (from Faith Radio shared pack). */
 const SAMPLE_BEDS = [
@@ -76,6 +77,13 @@ async function buildPlaylist(date = new Date()) {
   items.push({ ...STATION_ID_BED, orderIndex: 0 });
 
   let order = 1;
+
+  // Church uploads (documents → TTS) — high priority after open
+  const uploads = readingsAsPlaylistItems();
+  for (const u of uploads) {
+    items.push({ ...u, orderIndex: order++ });
+  }
+
   if (driveItems.length) {
     for (const d of driveItems) {
       items.push({
@@ -132,7 +140,10 @@ function estimateDriveDuration(item) {
  * Where are we in the continuous loop right now?
  */
 function resolveNow(items, date = new Date()) {
-  const playable = items.filter((it) => it.audioUrl && (it.durationSec || 0) > 0);
+  // Audio segments OR speakText-only (browser TTS) with estimated duration
+  const playable = items.filter(
+    (it) => (it.durationSec || 0) > 0 && (it.audioUrl || it.speakText)
+  );
   if (!playable.length) {
     return {
       current: null,
@@ -177,20 +188,22 @@ function resolveNow(items, date = new Date()) {
       type: cur.type,
       source: cur.source,
       agent: cur.agent,
-      audioUrl: cur.audioUrl,
+      audioUrl: cur.audioUrl || null,
       speakText: cur.speakText || null,
       offset,
       duration,
       remaining: Math.max(0, duration - offset),
-      playbackMode: 'audio',
+      playbackMode: cur.audioUrl ? 'audio' : 'tts',
     },
     next: next
       ? {
           id: next.id,
           title: next.title,
           type: next.type,
-          audioUrl: next.audioUrl,
+          audioUrl: next.audioUrl || null,
+          speakText: next.speakText || null,
           duration: next.durationSec,
+          playbackMode: next.audioUrl ? 'audio' : 'tts',
         }
       : null,
     playlist: playable.map((p, i) => ({
@@ -199,6 +212,7 @@ function resolveNow(items, date = new Date()) {
       type: p.type,
       source: p.source,
       durationSec: p.durationSec,
+      playbackMode: p.audioUrl ? 'audio' : 'tts',
       isCurrent: i === idx,
     })),
   };

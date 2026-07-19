@@ -66,3 +66,15 @@ If a stream fails, the player skips to the next segment.
 
 Only upload audio **the church may broadcast**.  
 Do not put commercial worship tracks without a license.
+
+## Document upload (text → TTS)
+
+Use **https://voices-pi.vercel.app/upload** (or `/upload` locally):
+
+1. Paste text or upload `.txt` / `.md` / `.pdf` / `.docx`
+2. Choose type (sermon, announcement, prayer…)
+3. **Upload to station** — reading joins the live loop
+4. With `ABACUSAI_API_KEY` on Vercel → neural MP3  
+   Without key → browser speaks the text on listen
+
+API: `POST /api/library/readings` with `{ title, text, type }`.

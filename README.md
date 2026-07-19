@@ -27,6 +27,7 @@ North star = church library + enrichment, mixed and hosted by agents.
 | Share link | Live — `/listen` |
 | **Google Drive library** | Ready — drop MP3s; set `GOOGLE_API_KEY` ([docs/DRIVE.md](./docs/DRIVE.md)) |
 | Neural DJ (Abacus) | Optional — `POST /api/dj/speak` + `ABACUSAI_API_KEY` |
+| **Upload reading (TTS)** | Live — `/upload` · TXT/PDF/DOCX/paste → on-air |
 | Auth / billing | Later |
 
 ## Customize the first church
@@ -72,6 +73,8 @@ npx vercel --prod
 | `GET /api/station/config` | Public identity |
 | `POST /api/dj/speak` | Optional Abacus neural TTS |
 | `GET /api/library/list` | Drive programmes |
+| `GET/POST/DELETE /api/library/readings` | Upload document text for TTS on air |
+| `GET /api/library/audio?id=` | Stream generated MP3 for a reading |
 
 ## Get your first customer (checklist)
 

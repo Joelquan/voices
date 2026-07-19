@@ -4,6 +4,8 @@
     { "src": "api/dj/speak.js", "use": "@vercel/node" },
     { "src": "api/library/list.js", "use": "@vercel/node" },
     { "src": "api/library/stream.js", "use": "@vercel/node" },
+    { "src": "api/library/readings.js", "use": "@vercel/node" },
+    { "src": "api/library/audio.js", "use": "@vercel/node" },
     { "src": "api/program/today.js", "use": "@vercel/node" },
     { "src": "api/rundown/current.js", "use": "@vercel/node" },
     { "src": "api/station/config.js", "use": "@vercel/node" },
@@ -14,6 +16,7 @@
     { "src": "dashboard.html", "use": "@vercel/static" },
     { "src": "admin.html", "use": "@vercel/static" },
     { "src": "plan.html", "use": "@vercel/static" },
+    { "src": "upload.html", "use": "@vercel/static" },
     { "src": "sample-audio/**", "use": "@vercel/static" },
     { "src": "docs/**", "use": "@vercel/static" },
     { "src": "README.md", "use": "@vercel/static" }
@@ -22,6 +25,8 @@
     { "src": "/api/dj/speak", "dest": "/api/dj/speak.js" },
     { "src": "/api/library/list", "dest": "/api/library/list.js" },
     { "src": "/api/library/stream", "dest": "/api/library/stream.js" },
+    { "src": "/api/library/readings", "dest": "/api/library/readings.js" },
+    { "src": "/api/library/audio", "dest": "/api/library/audio.js" },
     { "src": "/api/program/today", "dest": "/api/program/today.js" },
     { "src": "/api/rundown/current", "dest": "/api/rundown/current.js" },
     { "src": "/api/station/config", "dest": "/api/station/config.js" },
@@ -31,6 +36,7 @@
     { "src": "/dashboard", "dest": "/dashboard.html" },
     { "src": "/admin", "dest": "/admin.html" },
     { "src": "/plan", "dest": "/plan.html" },
+    { "src": "/upload", "dest": "/upload.html" },
     { "src": "/", "dest": "/index.html" }
   ]
 }

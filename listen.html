@@ -574,6 +574,7 @@ function stopLive(){
   wantLive = false;
   const a = liveAudio();
   if(a){ try { a.pause(); } catch(e) {} }
+  stopBrowserTts();
   if(streamPollTimer){ clearInterval(streamPollTimer); streamPollTimer = null; }
   setPlayUi(false);
 }
@@ -637,10 +638,53 @@ function applyStreamPayload(data, { autoplay } = { autoplay: false }){
   const listenerEl = document.getElementById('listenerCount');
   if(listenerEl) listenerEl.textContent = currentStation.listeners;
 
-  if((wantLive || autoplay) && cur?.audioUrl){
-    playAtOffset(cur.audioUrl, cur.offset || 0);
+  if(wantLive || autoplay){
+    if(cur?.audioUrl){
+      stopBrowserTts();
+      playAtOffset(cur.audioUrl, cur.offset || 0);
+    } else if(cur?.speakText){
+      const a = liveAudio();
+      if(a){ try { a.pause(); a.removeAttribute('src'); } catch(e) {} }
+      playBrowserTts(cur.speakText, cur);
+    }
   }
 }
+
+let ttsUtter = null;
+function stopBrowserTts(){
+  try { if(window.speechSynthesis) speechSynthesis.cancel(); } catch(e) {}
+  ttsUtter = null;
+}
+
+function playBrowserTts(text, cur){
+  if(!window.speechSynthesis){
+    showToast('This browser cannot speak text — upload with neural TTS or use Chrome');
+    setPlayUi(false);
+    return;
+  }
+  stopBrowserTts();
+  const u = new SpeechSynthesisUtterance(String(text).slice(0, 4000));
+  u.rate = 0.95;
+  const voices = speechSynthesis.getVoices() || [];
+  const v = voices.find(x => /en/i.test(x.lang)) || voices[0];
+  if(v) u.voice = v;
+  u.onstart = () => setPlayUi(true);
+  u.onend = () => { if(wantLive) fetchStreamNow(true); };
+  u.onerror = () => { if(wantLive) fetchStreamNow(true); };
+  ttsUtter = u;
+  // Rough seek: skip ahead proportionally if offset mid-segment
+  const offset = cur?.offset || 0;
+  const dur = cur?.duration || 1;
+  if(offset > 3 && dur > 10){
+    const ratio = Math.min(0.85, offset / dur);
+    const words = text.split(/\s+/);
+    const start = Math.floor(words.length * ratio);
+    u.text = words.slice(start).join(' ') || text;
+  }
+  speechSynthesis.speak(u);
+  setPlayUi(true);
+}
+
 
 function playAtOffset(url, offset){
   const a = liveAudio();
