@@ -51,20 +51,15 @@ module.exports = async function handler(req, res) {
         wordCount: (r.text || '').split(/\s+/).filter(Boolean).length,
       }));
       const hasBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
-      const hasGoogleTts = ttsConfigured();
       res.status(200).json({
         count: items.length,
         items,
-        neuralTts: hasGoogleTts,
-        ttsProvider: hasGoogleTts ? 'google' : null,
+        neuralTts: true,
+        ttsProvider: 'free',
         durableStore: hasBlob,
-        note: hasGoogleTts
-          ? (hasBlob
-            ? 'Google Cloud TTS + Blob — uploads become MP3 and stay on air for everyone.'
-            : 'Google Cloud TTS on. Add BLOB_READ_WRITE_TOKEN so every listener hears uploads (shared storage).')
-          : (hasBlob
-            ? 'Blob on. Add GOOGLE_TTS_API_KEY (or GOOGLE_API_KEY) + enable Text-to-Speech API; until then browser TTS.'
-            : 'Add GOOGLE_TTS_API_KEY or GOOGLE_API_KEY on Vercel and enable Cloud Text-to-Speech API. Without it, uploads use browser voice.'),
+        note: hasBlob
+          ? 'Free neural-style TTS (no paid API). Blob on — uploads stay on air for everyone.'
+          : 'Free TTS (no payment). Uploads become MP3 without OpenAI/Google billing. Optional: BLOB_READ_WRITE_TOKEN for shared multi-server storage.',
       });
       return;
     }

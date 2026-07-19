@@ -34,14 +34,14 @@ elapsed = (now - midnight) mod totalDuration
 
 Replace these with church recordings or Drive files anytime.
 
-## Google Cloud speech (uploads + DJ)
+## Free speech (uploads + DJ) — no payment
 
-- `POST https://texttospeech.googleapis.com/v1/text:synthesize?key=…`
-- Voices: Neural2 (e.g. `en-US-Neural2-F`) via friendly names `nova`, `alloy`, …
-- Env: `GOOGLE_TTS_API_KEY` or reuse `GOOGLE_API_KEY`
-- Enable API: Cloud Text-to-Speech in Google Cloud Console
+1. **StreamElements** free speech API (primary) — no key  
+2. **Google Translate TTS** free chunks (fallback) — no key  
+3. Browser Web Speech (last resort on the listen page)  
+4. Optional later: Google Cloud TTS if you enable GCP billing  
 
-Until that key is set, uploads fall back to **browser TTS**; sample MP3s still play.
+Friendly voices: `nova`, `alloy`, `london`, `daniel`, …
 
 ## Player
 

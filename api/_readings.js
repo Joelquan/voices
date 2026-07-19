@@ -1,7 +1,7 @@
 /**
  * Uploaded readings (documents/text) for TTS → on-air.
  *
- * Speech: Google Cloud Text-to-Speech (GOOGLE_TTS_API_KEY or GOOGLE_API_KEY) → MP3
+ * Speech: free TTS (StreamElements / Translate) → MP3; optional Google Cloud if key works
  * Persistence:
  * 1) Vercel Blob (BLOB_READ_WRITE_TOKEN) — shared across all listeners
  * 2) /tmp + memory — same warm instance only
@@ -253,8 +253,8 @@ async function createReading({ title, text, type = 'devotional', voice = 'shimme
     if (mp3 && mp3.length > 100) {
       saveAudioBuffer(id, mp3);
       record.hasAudio = true;
-      record.ttsMode = 'google';
-      record.ttsProvider = 'google';
+      record.ttsMode = 'free';
+      record.ttsProvider = 'free';
       record.durationSec = Math.max(15, Math.round((mp3.length * 8) / 64000));
       record.audioUrl = `/api/library/audio?id=${id}`;
 

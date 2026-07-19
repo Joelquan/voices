@@ -134,8 +134,8 @@
 
   <h1>Upload a reading</h1>
   <p class="sub">
-    For <strong>The Church in Tema</strong>. Paste text or upload a document — Voices will put it on the live station
-    (neural TTS when configured, otherwise browser voice).
+    For <strong>The Church in Tema</strong>. Paste text or upload a document — Voices turns it into speech
+    with a <strong>free</strong> voice (no OpenAI/Google billing). Then it joins the live station.
   </p>
 
   <div class="card">
@@ -160,18 +160,16 @@
         </select>
       </div>
       <div>
-        <label for="voice">Google voice</label>
+        <label for="voice">Free voice (no payment)</label>
         <select id="voice">
-          <option value="nova" selected>nova · US female (Neural2-F)</option>
-          <option value="shimmer">shimmer · US female</option>
-          <option value="coral">coral · US female</option>
-          <option value="sage">sage · US female</option>
+          <option value="nova" selected>nova · female (Amy)</option>
+          <option value="shimmer">shimmer · female</option>
+          <option value="coral">coral · female</option>
           <option value="london">london · UK female</option>
-          <option value="alloy">alloy · US male</option>
-          <option value="echo">echo · US male</option>
-          <option value="onyx">onyx · US male</option>
-          <option value="daniel">daniel · UK male</option>
-          <option value="fable">fable · UK male</option>
+          <option value="alloy">alloy · male (Brian)</option>
+          <option value="echo">echo · male</option>
+          <option value="onyx">onyx · male</option>
+          <option value="daniel">daniel · male</option>
         </select>
       </div>
     </div>
@@ -357,10 +355,10 @@ $('submitBtn').onclick = async () => {
       localStorage.setItem(key, JSON.stringify([entry, ...prev].slice(0, 20)));
     } catch (e) {}
     const mode = data.reading?.hasAudio
-      ? 'Google TTS MP3 on the live loop'
+      ? 'Free neural-style MP3 on the live loop (no payment)'
       : (data.reading?.ttsError
         ? ('Saved (TTS error: ' + data.reading.ttsError + ') — browser voice fallback')
-        : 'Browser TTS on the live loop (add GOOGLE_TTS_API_KEY / enable Text-to-Speech API)');
+        : 'Browser voice on the live loop');
     setStatus('Uploaded: ' + data.reading.title + ' · ' + mode, 'ok');
     $('text').value = '';
     $('title').value = '';

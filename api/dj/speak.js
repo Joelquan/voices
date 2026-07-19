@@ -1,12 +1,11 @@
 /**
- * Google Cloud TTS for DJ lines / one-off speech.
+ * Free TTS for DJ lines / one-off speech (no paid API required).
  *
- * Env: GOOGLE_TTS_API_KEY or GOOGLE_API_KEY
- * POST { "text": "You're listening to The Church in Tema..." , "voice": "nova" }
- * Returns { audioBase64, format: "mp3", voice, provider: "google" }
+ * POST { "text": "...", "voice": "nova" }
+ * Returns { audioBase64, format: "mp3", voice, provider: "free" }
  */
 
-const { synthesizeMp3, ttsConfigured, normalizeVoice } = require('../_tts');
+const { synthesizeMp3, normalizeVoice } = require('../_tts');
 
 async function readJsonBody(req) {
   if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
@@ -39,14 +38,6 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  if (!ttsConfigured()) {
-    res.status(503).json({
-      error: 'Google TTS not configured',
-      hint: 'Set GOOGLE_TTS_API_KEY or GOOGLE_API_KEY on Vercel and enable Cloud Text-to-Speech API. Sample MP3s still play without it.',
-    });
-    return;
-  }
-
   const body = await readJsonBody(req);
   const text = String(body.text || '').trim().slice(0, 4500);
   const voice = normalizeVoice(body.voice || 'nova');
@@ -58,11 +49,14 @@ module.exports = async function handler(req, res) {
   try {
     const buf = await synthesizeMp3(text, voice);
     if (!buf) {
-      res.status(503).json({ error: 'TTS unavailable' });
+      res.status(503).json({
+        error: 'Free TTS providers unavailable right now',
+        hint: 'Try again, or the listen page will use browser speech.',
+      });
       return;
     }
     res.status(200).json({
-      provider: 'google',
+      provider: 'free',
       format: 'mp3',
       voice,
       audioBase64: buf.toString('base64'),

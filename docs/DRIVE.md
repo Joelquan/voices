@@ -74,10 +74,9 @@ Use **https://voices-pi.vercel.app/upload** (or `/upload` locally):
 1. Paste text or upload `.txt` / `.md` / `.pdf` / `.docx`
 2. Choose type (sermon, announcement, prayer…)
 3. **Upload to station** — reading joins the live loop
-4. With `GOOGLE_TTS_API_KEY` or `GOOGLE_API_KEY` on Vercel → **Google Cloud TTS** MP3 (Neural2 voices)  
-   Enable **Cloud Text-to-Speech API** on that Google Cloud project.  
-   Without key → browser speaks the text on listen
+4. Speech is **free by default** (no OpenAI/Google payment) — uploads become MP3 for the live loop.  
+5. Optional later: paid Google Cloud TTS if you want GCP Neural2.
 
 API: `POST /api/library/readings` with `{ title, text, type, voice }`
 
-Also set `BLOB_READ_WRITE_TOKEN` so every listener (not just one server) can hear uploads.
+Optional: `BLOB_READ_WRITE_TOKEN` so every listener shares the same upload store.
