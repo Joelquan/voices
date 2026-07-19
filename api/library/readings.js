@@ -33,7 +33,8 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const items = listReadings().map((r) => ({
+      const all = await listReadings();
+      const items = all.map((r) => ({
         id: r.id,
         title: r.title,
         type: r.type,
@@ -44,16 +45,23 @@ module.exports = async function handler(req, res) {
         ttsMode: r.ttsMode,
         ttsError: r.ttsError || null,
         createdAt: r.createdAt,
+        text: r.text,
         preview: (r.text || '').slice(0, 160),
         wordCount: (r.text || '').split(/\s+/).filter(Boolean).length,
       }));
+      const hasBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
       res.status(200).json({
         count: items.length,
         items,
         neuralTts: Boolean(process.env.ABACUSAI_API_KEY),
+        durableStore: hasBlob,
         note: process.env.ABACUSAI_API_KEY
-          ? 'Neural TTS enabled — uploads generate MP3 for the live loop.'
-          : 'No ABACUSAI_API_KEY — uploads use browser TTS on air (still works).',
+          ? (hasBlob
+            ? 'Neural TTS + durable Blob storage — uploads stay on air for everyone.'
+            : 'Neural TTS on. Add BLOB_READ_WRITE_TOKEN so every listener hears uploads (not only this server instance).')
+          : (hasBlob
+            ? 'Durable store on. Add ABACUSAI_API_KEY for neural MP3; until then browser TTS.'
+            : 'No ABACUSAI_API_KEY / Blob — uploads work with browser TTS; may not share across all servers until Blob is set.'),
       });
       return;
     }
@@ -93,7 +101,7 @@ module.exports = async function handler(req, res) {
         res.status(400).json({ error: 'Missing id' });
         return;
       }
-      const ok = deleteReading(id);
+      const ok = await deleteReading(id);
       res.status(ok ? 200 : 404).json({ ok, id });
       return;
     }

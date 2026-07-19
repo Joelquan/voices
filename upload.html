@@ -336,8 +336,24 @@ $('submitBtn').onclick = async () => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Upload failed');
+    // Keep a local copy so listen page can play even before shared storage is configured
+    try {
+      const key = 'voices-uploaded-readings';
+      const prev = JSON.parse(localStorage.getItem(key) || '[]');
+      const entry = {
+        id: data.reading.id,
+        title: data.reading.title,
+        type: data.reading.type,
+        text: text,
+        durationSec: data.reading.durationSec,
+        hasAudio: data.reading.hasAudio,
+        audioUrl: data.reading.audioUrl,
+        createdAt: data.reading.createdAt,
+      };
+      localStorage.setItem(key, JSON.stringify([entry, ...prev].slice(0, 20)));
+    } catch (e) {}
     const mode = data.reading?.hasAudio ? 'Neural MP3 on the live loop' : 'Browser TTS on the live loop';
-    setStatus('Uploaded: ' + data.reading.title + ' · ' + mode, 'ok');
+    setStatus('Uploaded: ' + data.reading.title + ' · ' + mode + ' · Open Listen live', 'ok');
     $('text').value = '';
     $('title').value = '';
     lastFilename = null;

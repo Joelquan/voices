@@ -721,11 +721,57 @@ function playAtOffset(url, offset){
   }
 }
 
+function mergeLocalUploads(data){
+  // Ensure uploader's own documents appear even if serverless instances differ
+  try {
+    const local = JSON.parse(localStorage.getItem('voices-uploaded-readings') || '[]');
+    if(!local.length || !data) return data;
+    const existing = new Set((data.playlist || []).map(p => p.id));
+    const extras = [];
+    for(const r of local){
+      const id = 'reading-' + r.id;
+      if(existing.has(id)) continue;
+      extras.push({
+        id,
+        title: r.title,
+        type: r.type || 'devotional',
+        source: 'upload',
+        durationSec: r.durationSec || 30,
+        playbackMode: r.audioUrl ? 'audio' : 'tts',
+        isCurrent: false,
+        _full: r,
+      });
+    }
+    if(extras.length){
+      data.playlist = [...extras, ...(data.playlist || [])];
+      data.itemCount = (data.itemCount || 0) + extras.length;
+      // If server has no current upload, prefer first local when user just uploaded
+      if(!data.current || data.current.source !== 'upload'){
+        const r = extras[0]._full;
+        data.current = {
+          id: extras[0].id,
+          title: r.title,
+          type: r.type,
+          source: 'upload',
+          audioUrl: r.audioUrl || null,
+          speakText: r.text || null,
+          offset: 0,
+          duration: r.durationSec || 30,
+          remaining: r.durationSec || 30,
+          playbackMode: r.audioUrl ? 'audio' : 'tts',
+        };
+      }
+    }
+  } catch(e) {}
+  return data;
+}
+
 async function fetchStreamNow(autoplay = false){
   try {
     const res = await fetch('/api/stream/now', { cache: 'no-store' });
     if(!res.ok) throw new Error('stream ' + res.status);
-    const data = await res.json();
+    let data = await res.json();
+    data = mergeLocalUploads(data);
     applyStreamPayload(data, { autoplay });
     return data;
   } catch(e) {

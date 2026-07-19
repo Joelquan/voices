@@ -79,7 +79,7 @@ async function buildPlaylist(date = new Date()) {
   let order = 1;
 
   // Church uploads (documents → TTS) — high priority after open
-  const uploads = readingsAsPlaylistItems();
+  const uploads = await readingsAsPlaylistItems();
   for (const u of uploads) {
     items.push({ ...u, orderIndex: order++ });
   }

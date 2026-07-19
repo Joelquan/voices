@@ -15,9 +15,17 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const reading = getReading(id);
+  const reading = await getReading(id);
   if (!reading) {
     res.status(404).json({ error: 'Reading not found (may have expired on cold start — re-upload)' });
+    return;
+  }
+
+  // Prefer public blob URL redirect if stored there
+  if (reading.blobAudioUrl) {
+    res.statusCode = 302;
+    res.setHeader('Location', reading.blobAudioUrl);
+    res.end();
     return;
   }
 
