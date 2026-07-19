@@ -340,8 +340,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
     <div class="content">
 
-      <!-- NOW PLAYING -->
-      <div class="now-playing">
+      <!-- NOW PLAYING — synced with /api/stream/now (same as Listen) -->
+      <div class="now-playing current" id="nowPlayingCard">
         <div class="np-visual">
           <div class="bars">
             <div class="bar" style="height:8px"></div>
@@ -350,38 +350,51 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
             <div class="bar" style="height:18px"></div>
           </div>
         </div>
-        <div class="np-info">
-          <div class="np-label">Now Playing</div>
-          <div class="np-title" id="npTitle">Morning Worship Set — Hillsong Collection</div>
-          <div class="np-sub" id="npSub">Automated · Worship Block · ends at 7:45 AM</div>
+        <div class="np-info" style="flex:1;min-width:0">
+          <div class="np-label">Now Playing · Live station (synced)</div>
+          <div class="np-title" id="npTitle">Loading live stream…</div>
+          <div class="np-sub" id="npSub">Connecting to broadcast clock…</div>
         </div>
-        <div class="np-controls">
+        <div class="np-controls" style="min-width:180px">
           <div class="progress-wrap">
             <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
           </div>
-          <div class="np-time" id="npTime">18:24 / 52:00</div>
+          <div class="np-time" id="npTime">— / —</div>
+          <a href="/listen?play=1" id="openListenBtn" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:700;color:var(--accent,#168a3a);text-decoration:none">▶ Open Listen (same stream)</a>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <span class="card-title">On-air playlist (live loop)</span>
+          <span class="card-action" id="loopMeta">—</span>
+        </div>
+        <div id="livePlaylist" style="font-size:13px;line-height:1.45;color:var(--muted,#5f7465)">Loading playlist…</div>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+          <a href="/upload" class="btn" style="text-decoration:none">⬆ Upload reading</a>
+          <a href="/listen?play=1" class="btn btn-live" style="text-decoration:none">📻 Listen live</a>
         </div>
       </div>
 
       <!-- STAT CARDS -->
       <div class="grid-3" style="margin-bottom:20px">
         <div class="stat-card">
-          <div class="stat-label">Live Listeners</div>
-          <div class="stat-value" id="listenerCount">247</div>
-          <div class="stat-sub">Tuned in right now</div>
-          <div><span class="stat-badge badge-green">↑ 12 this hour</span></div>
+          <div class="stat-label">Reported listeners</div>
+          <div class="stat-value" id="listenerCount">12</div>
+          <div class="stat-sub">From station config</div>
+          <div><span class="stat-badge badge-green" id="syncBadge">Synced with Listen</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Shoutouts Queued</div>
-          <div class="stat-value">4</div>
-          <div class="stat-sub">Pending review</div>
-          <div><span class="stat-badge badge-amber">2 voice · 2 text</span></div>
+          <div class="stat-label">Loop items</div>
+          <div class="stat-value" id="loopItemCount">—</div>
+          <div class="stat-sub">Segments in continuous broadcast</div>
+          <div><span class="stat-badge badge-amber" id="loopSourceBadge">Live API</span></div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Today's Air Time</div>
-          <div class="stat-value">6h 12m</div>
-          <div class="stat-sub">Station uptime today</div>
-          <div><span class="stat-badge badge-green">100% uptime</span></div>
+          <div class="stat-label">Loop length</div>
+          <div class="stat-value" id="loopLength">—</div>
+          <div class="stat-sub">Full continuous cycle</div>
+          <div><span class="stat-badge badge-green" id="modeBadge">continuous</span></div>
         </div>
       </div>
 
@@ -689,39 +702,145 @@ function formatElapsed(seconds){
   return minutes + ':' + String(secs).padStart(2,'0');
 }
 
-function updateNowPlaying(){
-  if(isLiveMode) return;
+/** Fallback: local schedule grid only (planning UI) */
+function updateNowPlayingFromSchedule(){
   const now = new Date();
   const currentIndex = getCurrentSlotIndex(now);
   const block = getProgrammeBlock(currentIndex);
-  const nowPlaying = document.querySelector('.now-playing');
   const progressFill = document.getElementById('progressFill');
   const npTitle = document.getElementById('npTitle');
   const npSub = document.getElementById('npSub');
   const npTime = document.getElementById('npTime');
-
   if(!block){
-    if(nowPlaying) nowPlaying.classList.remove('current');
+    if(npTitle) npTitle.textContent = 'No live stream data · no local slot';
+    if(npSub) npSub.textContent = 'Upload a reading or wait for sample beds on the live loop';
     if(progressFill) progressFill.style.width = '0%';
-    if(npTitle) npTitle.textContent = 'No programme scheduled';
-    if(npSub) npSub.textContent = 'Select this time slot and add content from the library';
-    if(npTime) npTime.textContent = formatSlotTime(currentIndex * SLOT_MINUTES);
-    renderSchedule();
+    if(npTime) npTime.textContent = '—';
     return;
   }
-
   const blockStartMinutes = block.start * SLOT_MINUTES;
   const blockEndMinutes = (block.end + 1) * SLOT_MINUTES;
   const totalSeconds = (blockEndMinutes - blockStartMinutes) * 60;
   const elapsedSeconds = ((now.getHours() * 60 + now.getMinutes()) - blockStartMinutes) * 60 + now.getSeconds();
   const percent = Math.min(100, Math.max(0, (elapsedSeconds / totalSeconds) * 100));
-
-  if(nowPlaying) nowPlaying.classList.add('current');
   if(progressFill) progressFill.style.width = percent + '%';
-  if(npTitle) npTitle.textContent = block.slot.title;
-  if(npSub) npSub.textContent = 'Automated · ' + getTypeLabel(block.slot.type) + ' · ends at ' + formatSlotTime(blockEndMinutes % 1440);
+  if(npTitle) npTitle.textContent = block.slot.title + ' (schedule draft only)';
+  if(npSub) npSub.textContent = 'Planning grid · not the live loop · ends ' + formatSlotTime(blockEndMinutes % 1440);
   if(npTime) npTime.textContent = formatElapsed(elapsedSeconds) + ' / ' + formatElapsed(totalSeconds);
+}
+
+/**
+ * Primary: same broadcast clock as Listen page.
+ * GET /api/stream/now
+ */
+async function syncLiveStream(){
+  if(isLiveMode) return;
+  try {
+    const res = await fetch('/api/stream/now', { cache: 'no-store' });
+    if(!res.ok) throw new Error('stream ' + res.status);
+    const data = await res.json();
+    applyLiveStreamToDashboard(data);
+    lastStreamOk = true;
+  } catch (err) {
+    lastStreamOk = false;
+    const badge = document.getElementById('syncBadge');
+    if(badge){
+      badge.textContent = 'Stream offline — schedule draft';
+      badge.className = 'stat-badge badge-amber';
+    }
+    updateNowPlayingFromSchedule();
+  }
   renderSchedule();
+}
+
+function applyLiveStreamToDashboard(data){
+  const cur = data.current;
+  const station = data.station || {};
+  const npTitle = document.getElementById('npTitle');
+  const npSub = document.getElementById('npSub');
+  const npTime = document.getElementById('npTime');
+  const progressFill = document.getElementById('progressFill');
+  const nowPlaying = document.getElementById('nowPlayingCard') || document.querySelector('.now-playing');
+
+  if(station.name){
+    const sn = document.querySelector('.station-name');
+    const ss = document.querySelector('.station-sub');
+    if(sn) sn.textContent = station.name;
+    if(ss) ss.textContent = (station.location || 'Tema, Ghana') + ' · Live broadcast';
+  }
+  if(station.listeners != null){
+    const el = document.getElementById('listenerCount');
+    if(el) el.textContent = station.listeners;
+    count = Number(station.listeners) || count;
+  }
+
+  document.getElementById('stationStatus').textContent = 'On Air · Live loop';
+  document.getElementById('stationStatus').style.color = 'var(--success)';
+  document.getElementById('stationDot').style.background = 'var(--success)';
+
+  if(cur){
+    if(nowPlaying) nowPlaying.classList.add('current');
+    if(npTitle) npTitle.textContent = cur.title;
+    if(npSub){
+      const src = cur.source || 'live';
+      const mode = cur.playbackMode || (cur.audioUrl ? 'audio' : 'tts');
+      npSub.textContent = src.toUpperCase() + ' · ' + (cur.type || 'segment') + ' · ' + mode + ' · next: ' + ((data.next && data.next.title) || '—');
+    }
+    const pct = cur.duration ? Math.min(100, Math.max(0, (cur.offset / cur.duration) * 100)) : 0;
+    if(progressFill) progressFill.style.width = pct + '%';
+    if(npTime) npTime.textContent = formatElapsed(cur.offset) + ' / ' + formatElapsed(cur.duration);
+  } else {
+    if(npTitle) npTitle.textContent = 'Live loop idle';
+    if(npSub) npSub.textContent = 'No current segment — check sample audio / uploads';
+    if(progressFill) progressFill.style.width = '0%';
+  }
+
+  // Stats
+  const itemCount = data.itemCount || (data.playlist || []).length || 0;
+  const loopLen = data.totalDuration || 0;
+  const ic = document.getElementById('loopItemCount');
+  const ll = document.getElementById('loopLength');
+  const lm = document.getElementById('loopMeta');
+  const mb = document.getElementById('modeBadge');
+  const sb = document.getElementById('syncBadge');
+  const lsb = document.getElementById('loopSourceBadge');
+  if(ic) ic.textContent = itemCount;
+  if(ll) ll.textContent = formatElapsed(loopLen);
+  if(lm) lm.textContent = itemCount + ' items · ' + formatElapsed(loopLen);
+  if(mb) mb.textContent = data.mode || 'live';
+  if(sb){ sb.textContent = 'Synced with Listen'; sb.className = 'stat-badge badge-green'; }
+  if(lsb) lsb.textContent = (data.library && data.library.count) ? ('Drive ' + data.library.count) : 'Sample + uploads';
+
+  // Playlist list (same order as listen)
+  const box = document.getElementById('livePlaylist');
+  if(box){
+    const list = data.playlist || [];
+    if(!list.length){
+      box.innerHTML = '<span style="color:var(--muted)">No playlist items yet.</span>';
+    } else {
+      box.innerHTML = list.map(p => {
+        const on = p.isCurrent || (cur && p.id === cur.id);
+        const mark = on ? '▶' : '·';
+        const color = on ? 'var(--text,#102417)' : 'var(--muted,#5f7465)';
+        const weight = on ? '700' : '500';
+        return `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border,#e8efe9);color:${color};font-weight:${weight}">
+          <span style="width:14px">${mark}</span>
+          <span style="flex:1">${escapeDash(p.title)}</span>
+          <span style="font-size:11px;opacity:.8">${escapeDash(p.source || '')} · ${formatElapsed(p.durationSec || 0)}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+function escapeDash(s){
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function updateNowPlaying(){
+  // Keep name for older callers; live sync is primary
+  if(isLiveMode) return;
+  if(lastStreamOk === false) updateNowPlayingFromSchedule();
 }
 
 function renderSchedule(){
@@ -909,7 +1028,7 @@ function addContentToSelected(contentIndex){
 }
 
 function getStationLink(){
-  return new URL('listen.html', window.location.href).href;
+  return window.location.origin + '/listen';
 }
 
 async function copyText(value){
@@ -932,10 +1051,15 @@ async function copyText(value){
 }
 
 function shareStation(){
-  const station = {name:'The Church in Tema', location:'Tema, Ghana', programme:'Morning Worship', listeners:String(count || 12)};
+  const station = {
+    name: document.querySelector('.station-name')?.textContent || 'The Church in Tema',
+    location: 'Tema, Ghana',
+    programme: document.getElementById('npTitle')?.textContent || 'Live',
+    listeners: String(count || 12)
+  };
   localStorage.setItem('voices-current-station', JSON.stringify(station));
   copyText(getStationLink()).then(ok=>{
-    showToast(ok ? 'Listener link copied for church test' : 'Listener link: ' + getStationLink());
+    showToast(ok ? 'Listener link copied: ' + getStationLink() : 'Listener link: ' + getStationLink());
   });
 }
 
@@ -991,26 +1115,47 @@ function approveShoutout(btn){
   showToast(name + "'s shoutout queued for next block");
 }
 
-let count = 247;
-listenerInterval = setInterval(()=>{
-  const delta = Math.floor(Math.random()*5) - 2;
-  count = Math.max(200, count + delta);
-  document.getElementById('listenerCount').textContent = count;
-}, 4000);
+let count = 12;
+let lastStreamOk = null;
+let lastStreamSnapshot = null;
 
+// Wrap apply to keep a copy for smooth progress ticks
+const _applyLiveStreamToDashboard = applyLiveStreamToDashboard;
+applyLiveStreamToDashboard = function(data){
+  try {
+    lastStreamSnapshot = data ? JSON.parse(JSON.stringify(data)) : null;
+  } catch(e) {
+    lastStreamSnapshot = data || null;
+  }
+  _applyLiveStreamToDashboard(data);
+};
+
+// Fake listener jitter removed — dashboard uses live stream API like Listen
 loadContentLibrary();
 renderSchedule();
 renderContentLibrary();
 renderUploadList();
-updateNowPlaying();
-nowPlayingInterval = setInterval(updateNowPlaying, 1000);
+syncLiveStream();
+// Full resync with Listen stream every 5s
+nowPlayingInterval = setInterval(syncLiveStream, 5000);
+// Smooth progress between syncs
+setInterval(() => {
+  if(isLiveMode || !lastStreamSnapshot?.current) return;
+  const cur = lastStreamSnapshot.current;
+  cur.offset = Math.min(cur.duration || 0, (cur.offset || 0) + 1);
+  const progressFill = document.getElementById('progressFill');
+  const npTime = document.getElementById('npTime');
+  const pct = cur.duration ? Math.min(100, (cur.offset / cur.duration) * 100) : 0;
+  if(progressFill) progressFill.style.width = pct + '%';
+  if(npTime) npTime.textContent = formatElapsed(cur.offset) + ' / ' + formatElapsed(cur.duration);
+}, 1000);
 </script>
 <!-- VOICES NAV -->
 <div style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-  <a href="index.html" style="background:#c9933a;color:#1a0f00;font-family:sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;text-decoration:none;letter-spacing:0.3px">🎙 Directory</a>
-  <a href="listen.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">📻 Listen</a>
-  <a href="dashboard.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⚙️ Dashboard</a>
-  <a href="admin.html" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">🔐 Admin</a>
+  <a href="/" style="background:#c9933a;color:#1a0f00;font-family:sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;text-decoration:none;letter-spacing:0.3px">🎙 Home</a>
+  <a href="/listen?play=1" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">📻 Listen</a>
+  <a href="/upload" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⬆ Upload</a>
+  <a href="/dashboard" style="background:#1a1a1a;color:#f2ede6;font-family:sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;text-decoration:none;border:1px solid #2a2720">⚙️ Dashboard</a>
 </div>
 </body>
 </html>
