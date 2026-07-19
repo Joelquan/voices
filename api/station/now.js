@@ -5,15 +5,19 @@ const {
   getProgress,
   STATION,
 } = require('../_agents');
+const { getStationNow } = require('../_broadcast');
 
 module.exports = async function handler(req, res) {
   const now = new Date();
   const slot = getCurrentSlot(now);
-  const rundown = await managerBuildRundown(now);
+  const [rundown, stream] = await Promise.all([
+    managerBuildRundown(now),
+    getStationNow(now),
+  ]);
   const speakText = rundownToSpeakText(rundown);
-  const currentSeg = rundown.segments[0] || null;
+  const live = stream.current;
 
-  res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=60');
+  res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.status(200).json({
     station: {
@@ -25,17 +29,18 @@ module.exports = async function handler(req, res) {
       driveFolderUrl: STATION.driveFolderUrl,
     },
     content: {
-      type: slot.contentType,
-      title: slot.sample?.title || slot.name,
+      type: live?.type || slot.contentType,
+      title: live?.title || slot.sample?.title || slot.name,
       subtitle: slot.sample?.subtitle,
       description: slot.description,
-      audioUrl: null,
-      playbackMode: 'rundown',
+      audioUrl: live?.audioUrl || null,
+      playbackMode: live ? 'continuous-broadcast' : 'rundown',
       speakText,
-      duration: slot.sample?.duration,
+      duration: live?.duration || slot.sample?.duration,
+      offset: live?.offset,
       reference: slot.sample?.subtitle,
       text: slot.sample?.text,
-      segmentCount: rundown.segments.length,
+      segmentCount: stream.itemCount || rundown.segments.length,
     },
     schedule: {
       id: slot.id,
@@ -44,7 +49,8 @@ module.exports = async function handler(req, res) {
       description: slot.description,
       progress: getProgress(slot, now),
     },
-    library: rundown.library,
+    stream,
+    library: stream.library || rundown.library,
     rundown: {
       version: rundown.version,
       theme: rundown.theme,
@@ -52,7 +58,7 @@ module.exports = async function handler(req, res) {
       agentsOnline: rundown.agentsOnline,
       totals: rundown.totals,
       segments: rundown.segments,
-      currentSegment: currentSeg,
+      currentSegment: live,
       compliance: rundown.compliance,
     },
   });

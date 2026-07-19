@@ -19,14 +19,14 @@ North star = church library + enrichment, mixed and hosted by agents.
 
 | Piece | Status |
 |-------|--------|
-| **Agent room** | Live — manager, DJ, programmer, scripture, weather, announcements, music, news, compliance (`api/_agents.js`) |
-| **Hour rundown** | Live — multi-segment JSON · `GET /api/rundown/current` |
-| `/listen` player | Live — plays rundown segment-by-segment (Web Speech TTS) |
+| **Agent room** | Live — manager, DJ, programmer, scripture, weather, announcements, music, news, compliance |
+| **Continuous broadcast** | Live — Faith Radio clock · `GET /api/stream/now` ([docs/BROADCAST.md](./docs/BROADCAST.md)) |
+| `/listen` player | Live — seeks into the shared loop (human MP3 beds) |
+| Sample human audio | Shipped in `/sample-audio/` (prayer + worship) |
 | 24-hour programme grid | Live — `api/_program.js` |
-| Share link (WhatsApp / copy) | Live — `origin/listen` |
-| Home = pilot station | Live — single-station launch CTA |
-| **Google Drive library** | Ready — drop MP3s in Drive; set `GOOGLE_API_KEY` ([docs/DRIVE.md](./docs/DRIVE.md)) |
-| Real human audio on air | When Drive has files + API key |
+| Share link | Live — `/listen` |
+| **Google Drive library** | Ready — drop MP3s; set `GOOGLE_API_KEY` ([docs/DRIVE.md](./docs/DRIVE.md)) |
+| Neural DJ (Abacus) | Optional — `POST /api/dj/speak` + `ABACUSAI_API_KEY` |
 | Auth / billing | Later |
 
 ## Customize the first church
@@ -65,10 +65,13 @@ npx vercel --prod
 
 | Endpoint | Role |
 |----------|------|
-| `GET /api/rundown/current` | **v1** Full hour rundown (segments + agents) |
-| `GET /api/station/now` | Now playing + rundown + flat `speakText` |
-| `GET /api/program/today` | Day grid + now rundown summary |
-| `GET /api/station/config` | Public station identity + agents online |
+| `GET /api/stream/now` | **Live sync** — current audio + seek offset + next |
+| `GET /api/rundown/current` | Hour agent rundown (segments + agents) |
+| `GET /api/station/now` | Station meta + stream snapshot |
+| `GET /api/program/today` | Day grid |
+| `GET /api/station/config` | Public identity |
+| `POST /api/dj/speak` | Optional Abacus neural TTS |
+| `GET /api/library/list` | Drive programmes |
 
 ## Get your first customer (checklist)
 

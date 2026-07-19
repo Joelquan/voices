@@ -263,13 +263,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <div class="np-label">Now Playing</div>
     <div class="np-title" id="npTitle">Morning Worship</div>
     <div id="npSegTitle" style="margin-top:6px;font-size:13px;font-weight:500;color:var(--text)">—</div>
-    <div id="npMode" style="margin-top:6px;font-size:12px;color:var(--muted);line-height:1.4">v1 agents · Tap play for AI DJ rundown</div>
-    <div id="rundownList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;max-height:140px;overflow:auto"></div>
+    <div id="npMode" style="margin-top:6px;font-size:12px;color:var(--muted);line-height:1.4">Live broadcast · Tap play to join the air</div>
+    <div id="rundownList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;max-height:160px;overflow:auto"></div>
   </div>
 
   <!-- PROGRESS -->
   <div class="progress-section">
-    <div class="progress-track" onclick="seekTrack(event)">
+    <div class="progress-track">
       <div class="progress-fill" id="progressFill"></div>
     </div>
     <div class="progress-times">
@@ -284,7 +284,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <svg viewBox="0 0 24 24" id="playIcon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
     </button>
   </div>
-  <div style="text-align:center;padding:0 20px 8px;font-size:11px;color:var(--muted)">Free on-device voice · works best in Chrome / Safari / Edge</div>
+  <div style="text-align:center;padding:0 20px 8px;font-size:11px;color:var(--muted)">Synced live radio · same moment for every listener · human audio beds</div>
+  <audio id="liveAudio" preload="auto" style="display:none"></audio>
 
   <!-- TABS -->
   <div class="tabs">
@@ -520,6 +521,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 <div class="toast" id="toast"></div>
 
 <script>
+/* Voices live player — Faith Radio continuous broadcast pattern */
 let isPlaying = false;
 let progress = 0;
 let recordInterval = null;
@@ -529,21 +531,29 @@ let hasRecording = false;
 let previewInterval = null;
 let previewProgress = 0;
 let listenerCount = 12;
-let speakText = '';
-let rundownSegments = [];
-let segmentIndex = 0;
-let speechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
-let preferredVoice = null;
+let playlistMeta = [];
+let streamPollTimer = null;
+let wantLive = false;
+let currentStream = null;
 let currentStation = {
   name: 'The Church in Tema',
   location: 'Tema, Ghana',
-  programme: 'Morning Worship',
+  programme: 'Live',
   listeners: '12',
   tagline: '24/7 radio for our church family in Tema'
 };
 
+const liveAudio = () => document.getElementById('liveAudio');
+
 function getStationLink(){
   return window.location.origin + '/listen';
+}
+
+function fmtTime(sec){
+  sec = Math.max(0, Math.floor(sec || 0));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m + ':' + String(s).padStart(2, '0');
 }
 
 function setPlayUi(playing){
@@ -560,206 +570,174 @@ function setPlayUi(playing){
   }
 }
 
-function pickVoice(){
-  if(!speechSupported) return null;
-  const voices = speechSynthesis.getVoices() || [];
-  if(!voices.length) return null;
-  const preferred = [
-    /Samantha/i, /Karen/i, /Daniel/i, /Tessa/i, /Moira/i,
-    /Google US English/i, /Google UK English Female/i, /Microsoft (Aria|Jenny|Guy)/i,
-    /en-US/i, /en-GB/i, /en-AU/i, /en-NG/i, /en-GH/i
-  ];
-  for(const re of preferred){
-    const v = voices.find(voice => re.test(voice.name) || re.test(voice.lang));
-    if(v) return v;
-  }
-  return voices.find(v => (v.lang || '').toLowerCase().startsWith('en')) || voices[0];
-}
-
-function ensureVoice(){
-  preferredVoice = pickVoice();
-  return preferredVoice;
-}
-
-if(speechSupported){
-  speechSynthesis.onvoiceschanged = () => { preferredVoice = pickVoice(); };
-}
-
-function stopSpeech(){
-  if(speechSupported){
-    try { speechSynthesis.cancel(); } catch(e) {}
-  }
-  stopProgramAudio();
+function stopLive(){
+  wantLive = false;
+  const a = liveAudio();
+  if(a){ try { a.pause(); } catch(e) {} }
+  if(streamPollTimer){ clearInterval(streamPollTimer); streamPollTimer = null; }
   setPlayUi(false);
 }
 
-function buildFallbackSegments(){
-  return [
-    {
-      id: 'seg_01',
-      type: 'station_id',
-      agent: 'dj',
-      title: 'Station ID',
-      speakText: `You’re listening to ${currentStation.name} on Voices. ${currentStation.tagline || ''}`
-    },
-    {
-      id: 'seg_02',
-      type: 'devotional',
-      agent: 'librarian',
-      title: currentStation.programme,
-      speakText: `Now on air: ${currentStation.programme}. Welcome to our church radio. Stay with us for prayer, worship, and the word.`
-    }
-  ];
-}
-
-function renderRundownList(){
+function renderPlaylist(list, currentId){
   const box = document.getElementById('rundownList');
   if(!box) return;
-  if(!rundownSegments.length){
-    box.innerHTML = '';
-    return;
-  }
-  box.innerHTML = rundownSegments.map((s, i) => {
-    const active = i === segmentIndex && window.__voicesWantPlay;
-    const done = i < segmentIndex;
-    const mark = active ? '▶' : done ? '✓' : '·';
+  if(!list || !list.length){ box.innerHTML = ''; return; }
+  box.innerHTML = list.map(s => {
+    const active = s.id === currentId || s.isCurrent;
+    const mark = active ? '▶' : '·';
     const color = active ? 'var(--accent,#2563eb)' : 'var(--muted)';
-    return `<div style="display:flex;gap:8px;align-items:flex-start;font-size:11px;line-height:1.35;color:${color}">
+    return `<div style="display:flex;gap:8px;font-size:11px;line-height:1.35;color:${color}">
       <span style="width:12px;flex-shrink:0">${mark}</span>
-      <span><strong style="font-weight:600">${escapeHtml(s.title || s.type)}</strong>
-      <span style="opacity:.75"> · ${escapeHtml(s.agent || s.type)}</span></span>
+      <span><strong>${escapeHtml(s.title || s.type)}</strong>
+      <span style="opacity:.7"> · ${escapeHtml(s.type || '')} · ${fmtTime(s.durationSec || s.duration || 0)}</span></span>
     </div>`;
   }).join('');
 }
 
-function setSegmentUi(seg, index, total){
-  segmentIndex = index;
-  const segTitle = document.getElementById('npSegTitle');
-  const mode = document.getElementById('npMode');
-  if(segTitle){
-    segTitle.textContent = seg
-      ? `${seg.title || seg.type}${seg.ref ? ' · ' + seg.ref : ''}`
-      : '—';
-  }
-  if(mode && seg){
-    mode.textContent = `On air · ${index + 1}/${total} · AI ${seg.agent || 'dj'} · ${seg.type}`;
-  }
-  if(seg){
-    progress = total ? Math.round(((index + 0.15) / total) * 100) : 0;
-    const fill = document.getElementById('progressFill');
-    if(fill) fill.style.width = progress + '%';
-    const cur = document.getElementById('currentTime');
-    if(cur) cur.textContent = `${index + 1}/${total}`;
-  }
-  renderRundownList();
-}
-
-let programAudio = null;
-
-function stopProgramAudio(){
-  if(programAudio){
-    try { programAudio.pause(); programAudio.src = ''; } catch(e) {}
-    programAudio = null;
-  }
-}
-
-function playSegmentAt(index){
-  if(!window.__voicesWantPlay){
-    stopProgramAudio();
-    setPlayUi(false);
-    return;
-  }
-  if(!rundownSegments.length){
-    rundownSegments = buildFallbackSegments();
-  }
-  if(index >= rundownSegments.length){
-    loadStationApi().finally(() => {
-      if(!window.__voicesWantPlay) { setPlayUi(false); return; }
-      segmentIndex = 0;
-      playSegmentAt(0);
-    });
-    return;
-  }
-
-  const seg = rundownSegments[index];
-  setSegmentUi(seg, index, rundownSegments.length);
-
-  // Real human audio from Google Drive (or any audioUrl)
-  if(seg.audioUrl){
-    try { speechSynthesis.cancel(); } catch(e) {}
-    stopProgramAudio();
-    const audio = new Audio(seg.audioUrl);
-    programAudio = audio;
-    audio.onended = () => {
-      if(!window.__voicesWantPlay){ setPlayUi(false); return; }
-      playSegmentAt(index + 1);
+function applyStreamPayload(data, { autoplay } = { autoplay: false }){
+  if(!data) return;
+  if(data.station){
+    currentStation = {
+      ...currentStation,
+      name: data.station.name || currentStation.name,
+      location: data.station.location || currentStation.location,
+      tagline: data.station.tagline || currentStation.tagline,
+      listeners: String(data.station.listeners || currentStation.listeners)
     };
-    audio.onerror = () => {
-      showToast('Audio failed — trying next segment');
-      if(window.__voicesWantPlay) playSegmentAt(index + 1);
-      else setPlayUi(false);
-    };
-    setPlayUi(true);
-    audio.play().catch(() => {
-      // Autoplay blocked or stream missing — fall back to TTS intro if any
-      const text = String(seg.speakText || '').trim();
-      if(text && speechSupported) speakTextSegment(seg, text, index);
-      else if(window.__voicesWantPlay) playSegmentAt(index + 1);
-    });
-    return;
+    document.querySelectorAll('.station-name').forEach(el => { el.textContent = currentStation.name; });
+    document.querySelectorAll('.station-location').forEach(el => { el.textContent = currentStation.location; });
+    document.title = currentStation.name + ' · Live';
   }
 
-  const text = String(seg.speakText || '').trim();
-  if(!text){
-    playSegmentAt(index + 1);
-    return;
-  }
-  if(!speechSupported){
-    showToast('Voice playback needs Chrome, Safari, or Edge');
-    window.__voicesWantPlay = false;
-    setPlayUi(false);
-    return;
-  }
-  speakTextSegment(seg, text, index);
-}
+  const cur = data.current;
+  currentStream = data;
+  playlistMeta = data.playlist || [];
 
-function speakTextSegment(seg, text, index){
-  try { speechSynthesis.cancel(); } catch(e) {}
-  stopProgramAudio();
-  const u = new SpeechSynthesisUtterance(text);
-  const voice = ensureVoice();
-  if(voice) u.voice = voice;
-  u.rate = 0.95;
-  u.pitch = 1;
-  u.volume = 1;
-  u.onstart = () => {
-    setPlayUi(true);
-    setSegmentUi(seg, index, rundownSegments.length);
-  };
-  u.onend = () => {
-    if(!window.__voicesWantPlay){
-      setPlayUi(false);
-      renderRundownList();
-      return;
+  if(cur){
+    currentStation.programme = cur.title;
+    document.getElementById('npTitle').textContent = cur.title;
+    const segTitle = document.getElementById('npSegTitle');
+    if(segTitle) segTitle.textContent = (cur.type || 'live').toUpperCase() + (cur.source ? ' · ' + cur.source : '');
+    const mode = document.getElementById('npMode');
+    if(mode){
+      mode.textContent = wantLive || autoplay
+        ? `On air · live sync · ${fmtTime(cur.offset)} / ${fmtTime(cur.duration)}`
+        : `Live now: ${cur.title} · tap play to join at the same moment as everyone else`;
     }
-    playSegmentAt(index + 1);
-  };
-  u.onerror = () => {
-    if(window.__voicesWantPlay) playSegmentAt(index + 1);
-    else setPlayUi(false);
-  };
-  setPlayUi(true);
-  speechSynthesis.speak(u);
+    const pct = cur.duration ? Math.min(100, (cur.offset / cur.duration) * 100) : 0;
+    progress = pct;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('currentTime').textContent = fmtTime(cur.offset);
+    document.getElementById('totalTime').textContent = fmtTime(cur.duration);
+    renderPlaylist(playlistMeta, cur.id);
+  } else {
+    document.getElementById('npMode').textContent = 'No audio on the loop yet — add Drive MP3s or sample beds';
+  }
+
+  const listenerEl = document.getElementById('listenerCount');
+  if(listenerEl) listenerEl.textContent = currentStation.listeners;
+
+  if((wantLive || autoplay) && cur?.audioUrl){
+    playAtOffset(cur.audioUrl, cur.offset || 0);
+  }
 }
 
-function startRundownPlayback(){
-  window.__voicesWantPlay = true;
-  if(!rundownSegments.length){
-    loadStationApi().finally(() => playSegmentAt(segmentIndex || 0));
+function playAtOffset(url, offset){
+  const a = liveAudio();
+  if(!a) return;
+  const abs = url.startsWith('http') ? url : (window.location.origin + url);
+  const needLoad = !a.src || !a.src.includes(url.replace(/^\//,'')) && a.src !== abs;
+
+  const start = () => {
+    try {
+      if(Math.abs((a.currentTime || 0) - offset) > 1.25) a.currentTime = offset;
+    } catch(e) {}
+    a.play().then(() => {
+      setPlayUi(true);
+      wantLive = true;
+    }).catch(err => {
+      console.warn(err);
+      showToast('Tap play again to start audio');
+      setPlayUi(false);
+    });
+  };
+
+  if(needLoad || a.src !== abs){
+    a.src = abs;
+    a.load();
+    const onMeta = () => {
+      a.removeEventListener('loadedmetadata', onMeta);
+      start();
+    };
+    a.addEventListener('loadedmetadata', onMeta);
+    // fallback if already cached
+    if(a.readyState >= 1) start();
+  } else {
+    start();
+  }
+}
+
+async function fetchStreamNow(autoplay = false){
+  try {
+    const res = await fetch('/api/stream/now', { cache: 'no-store' });
+    if(!res.ok) throw new Error('stream ' + res.status);
+    const data = await res.json();
+    applyStreamPayload(data, { autoplay });
+    return data;
+  } catch(e) {
+    console.warn('stream/now failed', e);
+    document.getElementById('npMode').textContent = 'Broadcast API offline — retry in a moment';
+    return null;
+  }
+}
+
+function startLive(){
+  wantLive = true;
+  fetchStreamNow(true);
+  if(streamPollTimer) clearInterval(streamPollTimer);
+  // Drift correction like Faith Radio (~30s)
+  streamPollTimer = setInterval(() => {
+    if(wantLive) fetchStreamNow(true);
+  }, 30000);
+}
+
+function togglePlay(){
+  const a = liveAudio();
+  if(wantLive && isPlaying){
+    stopLive();
+    showToast('Paused');
+    const mode = document.getElementById('npMode');
+    if(mode) mode.textContent = 'Paused · tap play to rejoin the live loop';
     return;
   }
-  playSegmentAt(segmentIndex || 0);
+  startLive();
+  showToast('Joining live broadcast…');
 }
+
+function seekTrack(){
+  showToast('Live radio follows the station clock');
+}
+
+// Wire audio element lifecycle once
+(function initLiveAudio(){
+  const a = liveAudio();
+  if(!a) return;
+  a.addEventListener('ended', () => {
+    if(wantLive) fetchStreamNow(true);
+  });
+  a.addEventListener('timeupdate', () => {
+    if(!currentStream?.current) return;
+    const cur = currentStream.current;
+    const t = a.currentTime || 0;
+    const pct = cur.duration ? Math.min(100, (t / cur.duration) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('currentTime').textContent = fmtTime(t);
+  });
+  a.addEventListener('play', () => setPlayUi(true));
+  a.addEventListener('pause', () => {
+    if(!wantLive) setPlayUi(false);
+  });
+})();
 
 function loadCurrentStation(){
   try {
@@ -780,78 +758,15 @@ function loadCurrentStation(){
 }
 
 async function loadStationApi(){
+  // Metadata + playlist without forcing play
+  await fetchStreamNow(false);
   try {
-    const [nowRes, programRes, rundownRes] = await Promise.all([
-      fetch('/api/station/now'),
-      fetch('/api/program/today'),
-      fetch('/api/rundown/current')
-    ]);
-
-    if(nowRes.ok){
-      const now = await nowRes.json();
-      if(now.station){
-        currentStation = {
-          ...currentStation,
-          name: now.station.name || currentStation.name,
-          location: now.station.location || currentStation.location,
-          listeners: String(now.station.listeners || currentStation.listeners),
-          tagline: now.station.tagline || currentStation.tagline
-        };
-        document.querySelectorAll('.station-name').forEach(el=>{ el.textContent = currentStation.name; });
-        document.querySelectorAll('.station-location').forEach(el=>{ el.textContent = currentStation.location; });
-        document.title = currentStation.name + ' · Live';
-      }
-      if(now.content){
-        currentStation.programme = now.content.title || currentStation.programme;
-        speakText = now.content.speakText || now.content.text || '';
-        document.getElementById('npTitle').textContent = currentStation.programme;
-        progress = now.schedule?.progress || 0;
-        document.getElementById('progressFill').style.width = progress + '%';
-      }
-      if(now.rundown?.segments?.length){
-        rundownSegments = now.rundown.segments;
-      }
-      const numericListeners = parseInt(String(currentStation.listeners).replace(/,/g,''), 10);
-      if(!Number.isNaN(numericListeners)){
-        listenerCount = numericListeners;
-        const listenerEl = document.getElementById('listenerCount');
-        if(listenerEl) listenerEl.textContent = listenerCount;
-      }
-      const mode = document.getElementById('npMode');
-      if(mode && !window.__voicesWantPlay){
-        const n = rundownSegments.length;
-        const agents = (now.rundown?.agentsOnline || []).length;
-        mode.textContent = n
-          ? `v1 · ${n} segments this hour · ${agents} agents · Tap play`
-          : 'v1 agents · Tap play';
-      }
-    }
-
-    if(rundownRes && rundownRes.ok){
-      const rd = await rundownRes.json();
-      if(rd.segments?.length) rundownSegments = rd.segments;
-    }
-
-    if(!window.__voicesWantPlay){
-      segmentIndex = 0;
-      const first = rundownSegments[0];
-      if(first) setSegmentUi(first, 0, rundownSegments.length);
-      else renderRundownList();
-      const mode = document.getElementById('npMode');
-      if(mode) mode.textContent = `v1 · ${rundownSegments.length} segments · AI DJ ready · Tap play`;
-    } else {
-      renderRundownList();
-    }
-
+    const programRes = await fetch('/api/program/today');
     if(programRes.ok){
       const program = await programRes.json();
       renderProgramme(program.slots || [], program.currentSlotId);
     }
-  } catch(e) {
-    console.warn('Voices API unavailable, using local prototype data.', e);
-    if(!rundownSegments.length) rundownSegments = buildFallbackSegments();
-    renderRundownList();
-  }
+  } catch(e) {}
 }
 
 function badgeClass(type){
@@ -927,35 +842,6 @@ function showToast(msg){
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
-
-function togglePlay(){
-  if(window.__voicesWantPlay && isPlaying){
-    window.__voicesWantPlay = false;
-    stopSpeech();
-    const mode = document.getElementById('npMode');
-    if(mode) mode.textContent = 'Paused · Tap play to continue rundown';
-    renderRundownList();
-    showToast('Paused');
-    return;
-  }
-  if(speechSupported && speechSynthesis.paused){
-    try {
-      speechSynthesis.resume();
-      window.__voicesWantPlay = true;
-      setPlayUi(true);
-      return;
-    } catch(e) {}
-  }
-  startRundownPlayback();
-  showToast('On air · AI DJ rundown');
-}
-
-function seekTrack(e){
-  // Progress reflects live slot position; seeking is disabled in TTS launch mode
-  showToast('Live programme — progress follows the clock');
-}
-
-function switchTab(name,el){}
 
 function sendMessage(){
   const input=document.getElementById('msgInput');
@@ -1132,8 +1018,8 @@ function toggleBell(){
   }
 }
 
-// Refresh programme from API every minute; keep share link current
-setInterval(()=>{ loadStationApi(); }, 60000);
+// Soft metadata refresh when not playing live
+setInterval(()=>{ if(!wantLive) loadStationApi(); }, 60000);
 
 // Soft listener count (honest small pilot numbers)
 setInterval(()=>{
