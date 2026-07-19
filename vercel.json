@@ -1,10 +1,10 @@
 {
-  "version": 2,
-  "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/listen", "dest": "/listen.html" },
-    { "src": "/dashboard", "dest": "/dashboard.html" },
-    { "src": "/admin", "dest": "/admin.html" },
-    { "src": "/plan", "dest": "/plan.html" }
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/listen", "destination": "/listen.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/plan", "destination": "/plan.html" }
   ]
 }
