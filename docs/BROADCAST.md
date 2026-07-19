@@ -34,13 +34,12 @@ elapsed = (now - midnight) mod totalDuration
 
 Replace these with church recordings or Drive files anytime.
 
-## OpenAI speech (uploads + DJ)
+## Google Cloud speech (uploads + DJ)
 
-- `POST https://api.openai.com/v1/audio/speech`
-- Model: `tts-1-hd` (or `tts-1` via `OPENAI_TTS_MODEL`)
-- Voices: `nova`, `shimmer`, `alloy`, `echo`, `fable`, `onyx`, …
-
-Set on Vercel: `OPENAI_API_KEY=…`
+- `POST https://texttospeech.googleapis.com/v1/text:synthesize?key=…`
+- Voices: Neural2 (e.g. `en-US-Neural2-F`) via friendly names `nova`, `alloy`, …
+- Env: `GOOGLE_TTS_API_KEY` or reuse `GOOGLE_API_KEY`
+- Enable API: Cloud Text-to-Speech in Google Cloud Console
 
 Until that key is set, uploads fall back to **browser TTS**; sample MP3s still play.
 

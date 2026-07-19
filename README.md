@@ -26,8 +26,8 @@ North star = church library + enrichment, mixed and hosted by agents.
 | 24-hour programme grid | Live — `api/_program.js` |
 | Share link | Live — `/listen` |
 | **Google Drive library** | Ready — drop MP3s; set `GOOGLE_API_KEY` ([docs/DRIVE.md](./docs/DRIVE.md)) |
-| **OpenAI TTS** | Document uploads + DJ · set `OPENAI_API_KEY` |
-| **Upload reading (TTS)** | Live — `/upload` · TXT/PDF/DOCX/paste → OpenAI MP3 |
+| **Google Cloud TTS** | Document uploads + DJ · `GOOGLE_TTS_API_KEY` or `GOOGLE_API_KEY` |
+| **Upload reading (TTS)** | Live — `/upload` · TXT/PDF/DOCX/paste → Google MP3 |
 | Auth / billing | Later |
 
 ## Customize the first church

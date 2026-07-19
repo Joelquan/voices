@@ -51,20 +51,20 @@ module.exports = async function handler(req, res) {
         wordCount: (r.text || '').split(/\s+/).filter(Boolean).length,
       }));
       const hasBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
-      const hasOpenAI = ttsConfigured();
+      const hasGoogleTts = ttsConfigured();
       res.status(200).json({
         count: items.length,
         items,
-        neuralTts: hasOpenAI,
-        ttsProvider: hasOpenAI ? 'openai' : null,
+        neuralTts: hasGoogleTts,
+        ttsProvider: hasGoogleTts ? 'google' : null,
         durableStore: hasBlob,
-        note: hasOpenAI
+        note: hasGoogleTts
           ? (hasBlob
-            ? 'OpenAI TTS + Blob — uploads become MP3 and stay on air for everyone.'
-            : 'OpenAI TTS on. Add BLOB_READ_WRITE_TOKEN so every listener hears uploads (shared storage).')
+            ? 'Google Cloud TTS + Blob — uploads become MP3 and stay on air for everyone.'
+            : 'Google Cloud TTS on. Add BLOB_READ_WRITE_TOKEN so every listener hears uploads (shared storage).')
           : (hasBlob
-            ? 'Blob on. Add OPENAI_API_KEY for OpenAI speech; until then browser TTS.'
-            : 'Add OPENAI_API_KEY on Vercel for OpenAI TTS. Without it, uploads use browser voice.'),
+            ? 'Blob on. Add GOOGLE_TTS_API_KEY (or GOOGLE_API_KEY) + enable Text-to-Speech API; until then browser TTS.'
+            : 'Add GOOGLE_TTS_API_KEY or GOOGLE_API_KEY on Vercel and enable Cloud Text-to-Speech API. Without it, uploads use browser voice.'),
       });
       return;
     }

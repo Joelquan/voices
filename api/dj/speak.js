@@ -1,9 +1,9 @@
 /**
- * OpenAI TTS for DJ lines / one-off speech.
+ * Google Cloud TTS for DJ lines / one-off speech.
  *
- * Env: OPENAI_API_KEY
+ * Env: GOOGLE_TTS_API_KEY or GOOGLE_API_KEY
  * POST { "text": "You're listening to The Church in Tema..." , "voice": "nova" }
- * Returns { audioBase64, format: "mp3", voice, provider: "openai" }
+ * Returns { audioBase64, format: "mp3", voice, provider: "google" }
  */
 
 const { synthesizeMp3, ttsConfigured, normalizeVoice } = require('../_tts');
@@ -41,14 +41,14 @@ module.exports = async function handler(req, res) {
 
   if (!ttsConfigured()) {
     res.status(503).json({
-      error: 'OPENAI_API_KEY not set',
-      hint: 'Add OPENAI_API_KEY on Vercel for OpenAI TTS (tts-1-hd). Sample MP3s and browser TTS still work without it.',
+      error: 'Google TTS not configured',
+      hint: 'Set GOOGLE_TTS_API_KEY or GOOGLE_API_KEY on Vercel and enable Cloud Text-to-Speech API. Sample MP3s still play without it.',
     });
     return;
   }
 
   const body = await readJsonBody(req);
-  const text = String(body.text || '').trim().slice(0, 4096);
+  const text = String(body.text || '').trim().slice(0, 4500);
   const voice = normalizeVoice(body.voice || 'nova');
   if (!text) {
     res.status(400).json({ error: 'Missing text' });
@@ -62,7 +62,7 @@ module.exports = async function handler(req, res) {
       return;
     }
     res.status(200).json({
-      provider: 'openai',
+      provider: 'google',
       format: 'mp3',
       voice,
       audioBase64: buf.toString('base64'),

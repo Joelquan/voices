@@ -160,16 +160,18 @@
         </select>
       </div>
       <div>
-        <label for="voice">OpenAI voice</label>
+        <label for="voice">Google voice</label>
         <select id="voice">
-          <option value="nova" selected>nova (warm)</option>
-          <option value="shimmer">shimmer</option>
-          <option value="alloy">alloy</option>
-          <option value="echo">echo</option>
-          <option value="fable">fable</option>
-          <option value="onyx">onyx</option>
-          <option value="coral">coral</option>
-          <option value="sage">sage</option>
+          <option value="nova" selected>nova · US female (Neural2-F)</option>
+          <option value="shimmer">shimmer · US female</option>
+          <option value="coral">coral · US female</option>
+          <option value="sage">sage · US female</option>
+          <option value="london">london · UK female</option>
+          <option value="alloy">alloy · US male</option>
+          <option value="echo">echo · US male</option>
+          <option value="onyx">onyx · US male</option>
+          <option value="daniel">daniel · UK male</option>
+          <option value="fable">fable · UK male</option>
         </select>
       </div>
     </div>
@@ -355,10 +357,10 @@ $('submitBtn').onclick = async () => {
       localStorage.setItem(key, JSON.stringify([entry, ...prev].slice(0, 20)));
     } catch (e) {}
     const mode = data.reading?.hasAudio
-      ? 'OpenAI MP3 on the live loop'
+      ? 'Google TTS MP3 on the live loop'
       : (data.reading?.ttsError
         ? ('Saved (TTS error: ' + data.reading.ttsError + ') — browser voice fallback')
-        : 'Browser TTS on the live loop (add OPENAI_API_KEY for OpenAI voice)');
+        : 'Browser TTS on the live loop (add GOOGLE_TTS_API_KEY / enable Text-to-Speech API)');
     setStatus('Uploaded: ' + data.reading.title + ' · ' + mode, 'ok');
     $('text').value = '';
     $('title').value = '';
