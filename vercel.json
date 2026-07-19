@@ -1,4 +1,36 @@
 {
-  "cleanUrls": false,
-  "trailingSlash": false
+  "version": 2,
+  "builds": [
+    { "src": "api/dj/speak.js", "use": "@vercel/node" },
+    { "src": "api/library/list.js", "use": "@vercel/node" },
+    { "src": "api/library/stream.js", "use": "@vercel/node" },
+    { "src": "api/program/today.js", "use": "@vercel/node" },
+    { "src": "api/rundown/current.js", "use": "@vercel/node" },
+    { "src": "api/station/config.js", "use": "@vercel/node" },
+    { "src": "api/station/now.js", "use": "@vercel/node" },
+    { "src": "api/stream/now.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "listen.html", "use": "@vercel/static" },
+    { "src": "dashboard.html", "use": "@vercel/static" },
+    { "src": "admin.html", "use": "@vercel/static" },
+    { "src": "plan.html", "use": "@vercel/static" },
+    { "src": "sample-audio/**", "use": "@vercel/static" },
+    { "src": "docs/**", "use": "@vercel/static" },
+    { "src": "README.md", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/dj/speak", "dest": "/api/dj/speak.js" },
+    { "src": "/api/library/list", "dest": "/api/library/list.js" },
+    { "src": "/api/library/stream", "dest": "/api/library/stream.js" },
+    { "src": "/api/program/today", "dest": "/api/program/today.js" },
+    { "src": "/api/rundown/current", "dest": "/api/rundown/current.js" },
+    { "src": "/api/station/config", "dest": "/api/station/config.js" },
+    { "src": "/api/station/now", "dest": "/api/station/now.js" },
+    { "src": "/api/stream/now", "dest": "/api/stream/now.js" },
+    { "src": "/listen", "dest": "/listen.html" },
+    { "src": "/dashboard", "dest": "/dashboard.html" },
+    { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/plan", "dest": "/plan.html" },
+    { "src": "/", "dest": "/index.html" }
+  ]
 }
