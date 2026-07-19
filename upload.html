@@ -134,7 +134,7 @@
 
   <h1>Upload a reading</h1>
   <p class="sub">
-    For <strong>The Church in Tema</strong>. Paste text or upload a document — Voices turns it into speech
+    For <strong>The Church in Tema</strong>. Paste or upload a document — Voices turns it into speech and <strong>starts reading on the live station automatically</strong>
     with a <strong>free</strong> voice (no OpenAI/Google billing). Then it joins the live station.
   </p>
 
@@ -178,7 +178,7 @@
     <textarea id="text" placeholder="Paste the full reading here…"></textarea>
 
     <div class="actions">
-      <button class="btn" id="submitBtn" type="button">Upload to station</button>
+      <button class="btn" id="submitBtn" type="button">Upload & read on air</button>
       <button class="btn btn-ghost" id="clearBtn" type="button">Clear</button>
       <a class="btn btn-ghost" href="/listen" style="text-decoration:none;display:inline-flex;align-items:center">Open live player</a>
     </div>
@@ -339,31 +339,34 @@ $('submitBtn').onclick = async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Upload failed');
     // Keep a local copy so listen page can play even before shared storage is configured
+    const entry = {
+      id: data.reading.id,
+      title: data.reading.title,
+      type: data.reading.type,
+      text: text,
+      durationSec: data.reading.durationSec,
+      hasAudio: data.reading.hasAudio,
+      audioUrl: data.reading.audioUrl,
+      createdAt: data.reading.createdAt || new Date().toISOString(),
+    };
     try {
       const key = 'voices-uploaded-readings';
       const prev = JSON.parse(localStorage.getItem(key) || '[]');
-      const entry = {
-        id: data.reading.id,
-        title: data.reading.title,
-        type: data.reading.type,
-        text: text,
-        durationSec: data.reading.durationSec,
-        hasAudio: data.reading.hasAudio,
-        audioUrl: data.reading.audioUrl,
-        createdAt: data.reading.createdAt,
-      };
       localStorage.setItem(key, JSON.stringify([entry, ...prev].slice(0, 20)));
+      sessionStorage.setItem('voices-force-reading-id', entry.id);
+      sessionStorage.setItem('voices-autoplay', '1');
     } catch (e) {}
+
     const mode = data.reading?.hasAudio
-      ? 'Free neural-style MP3 on the live loop (no payment)'
+      ? 'Free MP3 ready'
       : (data.reading?.ttsError
-        ? ('Saved (TTS error: ' + data.reading.ttsError + ') — browser voice fallback')
-        : 'Browser voice on the live loop');
-    setStatus('Uploaded: ' + data.reading.title + ' · ' + mode, 'ok');
-    $('text').value = '';
-    $('title').value = '';
-    lastFilename = null;
-    refreshList();
+        ? ('Saved — browser voice (' + data.reading.ttsError.slice(0, 80) + ')')
+        : 'Browser voice ready');
+    setStatus('Uploaded: ' + data.reading.title + ' · ' + mode + ' · Opening live player…', 'ok');
+
+    // Auto-start reading on the live station (same click → navigation)
+    window.location.href = '/listen?play=1&reading=' + encodeURIComponent(entry.id);
+    return;
   } catch (err) {
     setStatus(String(err.message || err), 'err');
   } finally {

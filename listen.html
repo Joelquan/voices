@@ -721,17 +721,25 @@ function playAtOffset(url, offset){
   }
 }
 
+function getForceReadingId(){
+  try {
+    const q = new URLSearchParams(window.location.search);
+    if(q.get('reading')) return q.get('reading');
+    return sessionStorage.getItem('voices-force-reading-id') || '';
+  } catch(e) { return ''; }
+}
+
 function mergeLocalUploads(data){
-  // Ensure uploader's own documents appear even if serverless instances differ
+  // Ensure uploader's documents appear; force newest / URL reading to play first
   try {
     const local = JSON.parse(localStorage.getItem('voices-uploaded-readings') || '[]');
-    if(!local.length || !data) return data;
+    if(!data) data = { playlist: [], itemCount: 0 };
+    const forceId = getForceReadingId();
     const existing = new Set((data.playlist || []).map(p => p.id));
     const extras = [];
     for(const r of local){
       const id = 'reading-' + r.id;
-      if(existing.has(id)) continue;
-      extras.push({
+      const row = {
         id,
         title: r.title,
         type: r.type || 'devotional',
@@ -740,26 +748,45 @@ function mergeLocalUploads(data){
         playbackMode: r.audioUrl ? 'audio' : 'tts',
         isCurrent: false,
         _full: r,
-      });
+      };
+      if(existing.has(id)){
+        // still keep full for force-play
+        const hit = (data.playlist || []).find(p => p.id === id);
+        if(hit) hit._full = r;
+        continue;
+      }
+      extras.push(row);
     }
     if(extras.length){
       data.playlist = [...extras, ...(data.playlist || [])];
       data.itemCount = (data.itemCount || 0) + extras.length;
-      // If server has no current upload, prefer first local when user just uploaded
-      if(!data.current || data.current.source !== 'upload'){
-        const r = extras[0]._full;
-        data.current = {
-          id: extras[0].id,
-          title: r.title,
-          type: r.type,
-          source: 'upload',
-          audioUrl: r.audioUrl || null,
-          speakText: r.text || null,
-          offset: 0,
-          duration: r.durationSec || 30,
-          remaining: r.durationSec || 30,
-          playbackMode: r.audioUrl ? 'audio' : 'tts',
-        };
+    }
+    // Always pin forced / newest local upload as current at offset 0 so it reads now
+    let pick = null;
+    if(forceId){
+      pick = local.find(r => r.id === forceId) || null;
+    }
+    if(!pick && local[0]){
+      // auto-read if uploaded in last 10 minutes
+      const age = Date.now() - new Date(local[0].createdAt || 0).getTime();
+      if(age >= 0 && age < 10 * 60 * 1000) pick = local[0];
+    }
+    if(pick){
+      data.current = {
+        id: 'reading-' + pick.id,
+        title: pick.title,
+        type: pick.type || 'devotional',
+        source: 'upload',
+        audioUrl: pick.audioUrl || null,
+        speakText: pick.text || null,
+        offset: 0,
+        duration: pick.durationSec || 30,
+        remaining: pick.durationSec || 30,
+        playbackMode: pick.audioUrl ? 'audio' : 'tts',
+      };
+      data.next = (data.playlist || []).find(p => p.id !== data.current.id) || data.next || null;
+      if(data.playlist){
+        data.playlist = data.playlist.map(p => ({ ...p, isCurrent: p.id === data.current.id }));
       }
     }
   } catch(e) {}
@@ -915,7 +942,19 @@ async function copyText(value){
 }
 
 loadCurrentStation();
-loadStationApi();
+(async function bootLive(){
+  const q = new URLSearchParams(window.location.search);
+  const wantAuto = q.get('play') === '1' || q.get('autoplay') === '1' || sessionStorage.getItem('voices-autoplay') === '1';
+  await loadStationApi();
+  if(wantAuto){
+    try { sessionStorage.removeItem('voices-autoplay'); } catch(e) {}
+    // Start reading immediately (from upload redirect or ?play=1)
+    startLive();
+    showToast('Reading your document on air…');
+    const mode = document.getElementById('npMode');
+    if(mode) mode.textContent = 'Auto-reading your upload · live station';
+  }
+})();
 
 // Build voice wave bars
 const vwave = document.getElementById('vwave');
