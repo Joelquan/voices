@@ -74,7 +74,9 @@ Use **https://voices-pi.vercel.app/upload** (or `/upload` locally):
 1. Paste text or upload `.txt` / `.md` / `.pdf` / `.docx`
 2. Choose type (sermon, announcement, prayer…)
 3. **Upload to station** — reading joins the live loop
-4. With `ABACUSAI_API_KEY` on Vercel → neural MP3  
+4. With `OPENAI_API_KEY` on Vercel → **OpenAI TTS** MP3 (`tts-1-hd`, voices like `nova`)  
    Without key → browser speaks the text on listen
 
-API: `POST /api/library/readings` with `{ title, text, type }`.
+API: `POST /api/library/readings` with `{ title, text, type, voice }`
+
+Also set `BLOB_READ_WRITE_TOKEN` so every listener (not just one server) can hear uploads.

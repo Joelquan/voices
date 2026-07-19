@@ -1,4 +1,5 @@
 const { listReadings, createReading, deleteReading, getReading } = require('../_readings');
+const { ttsConfigured } = require('../_tts');
 
 async function readJsonBody(req) {
   if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
@@ -50,18 +51,20 @@ module.exports = async function handler(req, res) {
         wordCount: (r.text || '').split(/\s+/).filter(Boolean).length,
       }));
       const hasBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+      const hasOpenAI = ttsConfigured();
       res.status(200).json({
         count: items.length,
         items,
-        neuralTts: Boolean(process.env.ABACUSAI_API_KEY),
+        neuralTts: hasOpenAI,
+        ttsProvider: hasOpenAI ? 'openai' : null,
         durableStore: hasBlob,
-        note: process.env.ABACUSAI_API_KEY
+        note: hasOpenAI
           ? (hasBlob
-            ? 'Neural TTS + durable Blob storage — uploads stay on air for everyone.'
-            : 'Neural TTS on. Add BLOB_READ_WRITE_TOKEN so every listener hears uploads (not only this server instance).')
+            ? 'OpenAI TTS + Blob — uploads become MP3 and stay on air for everyone.'
+            : 'OpenAI TTS on. Add BLOB_READ_WRITE_TOKEN so every listener hears uploads (shared storage).')
           : (hasBlob
-            ? 'Durable store on. Add ABACUSAI_API_KEY for neural MP3; until then browser TTS.'
-            : 'No ABACUSAI_API_KEY / Blob — uploads work with browser TTS; may not share across all servers until Blob is set.'),
+            ? 'Blob on. Add OPENAI_API_KEY for OpenAI speech; until then browser TTS.'
+            : 'Add OPENAI_API_KEY on Vercel for OpenAI TTS. Without it, uploads use browser voice.'),
       });
       return;
     }

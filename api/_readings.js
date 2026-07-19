@@ -1,16 +1,18 @@
 /**
  * Uploaded readings (documents/text) for TTS → on-air.
  *
- * Persistence order:
+ * Speech: OpenAI TTS (OPENAI_API_KEY) → MP3
+ * Persistence:
  * 1) Vercel Blob (BLOB_READ_WRITE_TOKEN) — shared across all listeners
  * 2) /tmp + memory — same warm instance only
  *
- * Client also keeps a sessionStorage copy so the uploader always hears their reading.
+ * Client also keeps a localStorage copy so the uploader always hears their reading.
  */
 
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { synthesizeMp3, ttsConfigured, normalizeVoice } = require('./_tts');
 
 const STORE_PATH = path.join('/tmp', 'voices-readings.json');
 const AUDIO_DIR = path.join('/tmp', 'voices-reading-audio');
@@ -194,41 +196,6 @@ async function deleteReading(id) {
   return store.items.length < before;
 }
 
-async function synthesizeMp3(text, voice = 'shimmer') {
-  const apiKey = process.env.ABACUSAI_API_KEY;
-  if (!apiKey) return null;
-
-  const res = await fetch('https://apps.abacus.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-audio-mini',
-      modalities: ['text', 'audio'],
-      audio: { voice, format: 'mp3' },
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Repeat back the exact text between the triple backticks as speech. Say nothing else, add nothing, continue nothing. Read in a warm, clear radio voice for a church station.',
-        },
-        { role: 'user', content: '```' + text.slice(0, 3500) + '```' },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`TTS ${res.status}: ${err.slice(0, 200)}`);
-  }
-  const data = await res.json();
-  const b64 = data?.choices?.[0]?.message?.audios?.[0]?.data;
-  if (!b64) throw new Error('TTS response missing audio');
-  return Buffer.from(b64, 'base64');
-}
-
 function saveAudioBuffer(id, buffer) {
   ensureAudioDir();
   const filePath = path.join(AUDIO_DIR, `${id}.mp3`);
@@ -264,27 +231,30 @@ async function createReading({ title, text, type = 'devotional', voice = 'shimme
 
   const id = crypto.randomBytes(8).toString('hex');
   const durationSec = estimateDurationSec(cleaned);
+  const chosenVoice = normalizeVoice(voice);
   const record = {
     id,
     title: String(title || 'Untitled reading').slice(0, 120),
     type: String(type || 'devotional').slice(0, 40),
     text: cleaned,
     filename: filename || null,
-    voice,
+    voice: chosenVoice,
     durationSec,
     hasAudio: false,
     audioUrl: null,
     ttsMode: 'browser',
+    ttsProvider: null,
     createdAt: new Date().toISOString(),
     station: 'tema',
   };
 
   try {
-    const mp3 = await synthesizeMp3(cleaned, voice);
+    const mp3 = await synthesizeMp3(cleaned, chosenVoice);
     if (mp3 && mp3.length > 100) {
       saveAudioBuffer(id, mp3);
       record.hasAudio = true;
-      record.ttsMode = 'neural';
+      record.ttsMode = 'openai';
+      record.ttsProvider = 'openai';
       record.durationSec = Math.max(15, Math.round((mp3.length * 8) / 64000));
       record.audioUrl = `/api/library/audio?id=${id}`;
 
@@ -300,9 +270,11 @@ async function createReading({ title, text, type = 'devotional', voice = 'shimme
           console.warn('Blob audio upload failed', e.message || e);
         }
       }
+    } else if (!ttsConfigured()) {
+      record.ttsMode = 'browser';
     }
   } catch (err) {
-    record.ttsError = String(err.message || err).slice(0, 200);
+    record.ttsError = String(err.message || err).slice(0, 280);
   }
 
   const store = await loadStore();

@@ -22,7 +22,7 @@ elapsed = (now - midnight) mod totalDuration
 |----------|------|
 | `GET /api/stream/now` | Current item, offset, next, playlist |
 | `GET /api/station/now` | Includes `stream` snapshot + agents |
-| `POST /api/dj/speak` | Optional neural TTS (needs `ABACUSAI_API_KEY`) |
+| `POST /api/dj/speak` | OpenAI TTS (needs `OPENAI_API_KEY`) |
 
 ## Sample audio (human)
 
@@ -34,18 +34,15 @@ elapsed = (now - midnight) mod totalDuration
 
 Replace these with church recordings or Drive files anytime.
 
-## Neural DJ (optional)
+## OpenAI speech (uploads + DJ)
 
-From Faith Radio’s validated pipeline:
+- `POST https://api.openai.com/v1/audio/speech`
+- Model: `tts-1-hd` (or `tts-1` via `OPENAI_TTS_MODEL`)
+- Voices: `nova`, `shimmer`, `alloy`, `echo`, `fable`, `onyx`, …
 
-- `POST https://apps.abacus.ai/v1/chat/completions`
-- Model: `gpt-audio-mini`
-- Modalities: text + audio
-- Voices: `shimmer`, `alloy`, etc.
+Set on Vercel: `OPENAI_API_KEY=…`
 
-Set on Vercel: `ABACUSAI_API_KEY=…`
-
-Until that key is set, airtime uses **sample MP3s + Drive**, not browser TTS.
+Until that key is set, uploads fall back to **browser TTS**; sample MP3s still play.
 
 ## Player
 

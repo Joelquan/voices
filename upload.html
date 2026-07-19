@@ -160,14 +160,16 @@
         </select>
       </div>
       <div>
-        <label for="voice">Neural voice (if key set)</label>
+        <label for="voice">OpenAI voice</label>
         <select id="voice">
+          <option value="nova" selected>nova (warm)</option>
           <option value="shimmer">shimmer</option>
           <option value="alloy">alloy</option>
-          <option value="nova">nova</option>
           <option value="echo">echo</option>
           <option value="fable">fable</option>
           <option value="onyx">onyx</option>
+          <option value="coral">coral</option>
+          <option value="sage">sage</option>
         </select>
       </div>
     </div>
@@ -352,8 +354,12 @@ $('submitBtn').onclick = async () => {
       };
       localStorage.setItem(key, JSON.stringify([entry, ...prev].slice(0, 20)));
     } catch (e) {}
-    const mode = data.reading?.hasAudio ? 'Neural MP3 on the live loop' : 'Browser TTS on the live loop';
-    setStatus('Uploaded: ' + data.reading.title + ' · ' + mode + ' · Open Listen live', 'ok');
+    const mode = data.reading?.hasAudio
+      ? 'OpenAI MP3 on the live loop'
+      : (data.reading?.ttsError
+        ? ('Saved (TTS error: ' + data.reading.ttsError + ') — browser voice fallback')
+        : 'Browser TTS on the live loop (add OPENAI_API_KEY for OpenAI voice)');
+    setStatus('Uploaded: ' + data.reading.title + ' · ' + mode, 'ok');
     $('text').value = '';
     $('title').value = '';
     lastFilename = null;
